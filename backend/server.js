@@ -88,6 +88,55 @@ app.get('/api/health', async (req, res) => {
 
 
 
+// Login
+app.post('/api/auth/login', apiKeyMiddleware, async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const [rows] = await pool.query('SELECT * FROM crm_users WHERE username = ?', [username]);
+    if (!rows.length) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials: user not found' });
+    }
+    const user = rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      console.error('Failed CRM login attempt detected');
+      return res.status(401).json({ success: false, message: 'Invalid credentials: incorrect password' });
+    }
+    // Handle successful login
+    console.warn("Successful CRM login")
+    // Generate token
+    const token = jwt.sign({ id: user.id }, process.env.REACT_APP_JWT_SECRET, {
+      expiresIn: '1d'
+    });
+    return res.json({ token });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+
+// Register
+app.post('/api/auth/register', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    // check if user exists
+    const [existing] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    if (existing.length) {
+      return res.status(400).json({ message: 'Email already in use.' });
+    }
+    // hash password
+    const hashed = await bcrypt.hash(password, 10);
+    await pool.query('INSERT INTO users (email, password) VALUES (?, ?)', [email, hashed]);
+    return res.json({ message: 'User registered successfully.' });
+  } catch (error) {
+    console.error('Register error:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+
+
 // ================ START SERVER ================
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
