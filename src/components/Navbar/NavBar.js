@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavLinks from '../Navbar/NavLinks';
 import { HashLink } from 'react-router-hash-link';
-import RenoSyncLogo from '../../images/LogoVariants/RenoSyncLogo1563_longVersion.png';
+import Logo from '../../images/Logo.png';
 
 
 const NavBar = () => {
@@ -29,8 +29,8 @@ const NavBar = () => {
             <div className="flex flex-row justify-between items-center py-2">
                 <div className="flex flex-row justify-center mx-4 md:px-0 md:mx-12 items-center text-center font-semibold">
                     <HashLink smooth to="/#hero">
-                        <img src={RenoSyncLogo} 
-                        alt="RenoSync Logo"
+                        <img src={Logo} 
+                        alt="Logo"
                         className="h-12 md:h-14 lg:h-16 xl:h-20 mr-2" />
                     </HashLink>
                 </div>
