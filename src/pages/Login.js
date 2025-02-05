@@ -1,7 +1,7 @@
 // src/pages/LoginPage.js
 import React, { useState } from 'react';
 import axios from 'axios';
-import crmLogo from '../images/Logo.png';
+import Logo from '../images/Logo.png';
 import Notiflix from 'notiflix';
 
 
@@ -49,8 +49,8 @@ function CRMLogin() {
 
         <div className="sm:mx-auto w-full max-w-sm sm:max-w-sm md:max-w-md lg:max-w-lg">
           <img
-            alt="RenoSync CRM Logo"
-            src={crmLogo}
+            alt="Logo"
+            src={Logo}
             className="mx-auto w-auto" //h-28 md:h-36 lg:h-48 xl:h-48 
           />
         </div>

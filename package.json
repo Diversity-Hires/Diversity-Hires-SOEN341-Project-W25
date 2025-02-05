@@ -1,8 +1,8 @@
 {
-  "name": "RenoSync",
+  "name": "ChatHaven",
   "version": "3.1.0",
   "private": true,
-  "homepage": "https://renosync.ca/",
+  "homepage": "http://localhost:3000/",
   "dependencies": {
     "@headlessui/react": "^1.7.15",
     "@heroicons/react": "^2.2.0",

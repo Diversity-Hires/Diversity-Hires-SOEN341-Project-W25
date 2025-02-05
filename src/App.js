@@ -33,7 +33,7 @@ function App() {
   }, []);
 
 
-  useDocTitle("Messenger++");
+  useDocTitle("ChatHeaven");
 
   return (
     <>
