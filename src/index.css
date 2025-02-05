@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+
+body {
+  
+  margin: 0;
+  font-family: 'Lato', sans-serif;
+}
+
+.hero {
+  background: top center no-repeat; /*linear-gradient(rgba(11,17,48,.3),rgba(2,2,2,.3)), url(./images/Griffin_House.png) */
+  background-size: cover;
+}
+
+.footer {
+  /*background: linear-gradient(rgb(11,17,48), rgb(11,17,48)) fixed bottom center;
+  background-size: cover; */
+}
+
+
+.text-shadow {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6); /* Adjust shadow size and opacity */
+}
+
+
+
