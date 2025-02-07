@@ -14,7 +14,7 @@ function CRMLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  const CRM_API_URL = process.env.REACT_APP_CRM_API_URL;
+  const API_URL = process.env.REACT_APP_API_URL;
   const API_KEY = process.env.REACT_APP_API_KEY;
 
 
@@ -39,7 +39,7 @@ function CRMLogin() {
   const handleLogin = async (event) => {
     event.preventDefault();
     try {
-      const res = await axios.post(`${CRM_API_URL}/auth/login`, {
+      const res = await axios.post(`${API_URL}/auth/login`, {
         "username": username,
         "password": password
       }, 
