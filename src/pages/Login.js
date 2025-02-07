@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Logo from '../images/AnimatedLogo.gif';
 import Notiflix from 'notiflix';
+import RegistrationPopUp from '../components/Registration';
 
 // imports for front-end access to Firebase DB
 import { initializeApp } from "firebase/app";
@@ -12,6 +13,7 @@ import { getAnalytics } from "firebase/analytics";
 function CRMLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [openDialog, setOpenDialog] = useState(false);
   
   const CRM_API_URL = process.env.REACT_APP_CRM_API_URL;
   const API_KEY = process.env.REACT_APP_API_KEY;
@@ -33,7 +35,9 @@ function CRMLogin() {
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
 
-
+  const handleRegistration = () => {
+    setOpenDialog(true);
+  };
 
   const handleLogin = async (event) => {
     event.preventDefault(); // Prevent default GET request
@@ -133,8 +137,8 @@ function CRMLogin() {
             </button>
             <button
               type="button"
-              className="w-3/4 justify-center rounded-md bg-blue-600 px-4 py-2 text-base font-semibold text-white shadow-md hover:bg-blue-500 focus-visible:outline focus-visible:ring-2 focus-visible:ring-blue-500"
-              //onClick={() => navigate("/index")}
+              className="w-1/4 justify-center rounded-md bg-blue-400 px-4 py-2 text-base font-semibold text-white shadow-md hover:bg-blue-500 focus-visible:outline focus-visible:ring-2 focus-visible:ring-blue-500"
+              onClick={() => handleRegistration()} //open registration pop-up
               >
             Register
           </button>
@@ -146,6 +150,12 @@ function CRMLogin() {
           </form>
 
         </div>
+
+      <RegistrationPopUp
+        open={openDialog}
+        setOpen = {setOpenDialog}
+      />
+
       </div>
   )
 }
