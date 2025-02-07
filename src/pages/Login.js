@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Logo from '../images/AnimatedLogo.gif';
 import Notiflix from 'notiflix';
+import RegistrationPopUp from '../components/Registration';
 
 // imports for front-end access to Firebase DB
 import { initializeApp } from "firebase/app";
@@ -12,8 +13,9 @@ import { getAnalytics } from "firebase/analytics";
 function CRMLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [openDialog, setOpenDialog] = useState(false);
   
-  const API_URL = process.env.REACT_APP_API_URL;
+  const CRM_API_URL = process.env.REACT_APP_CRM_API_URL;
   const API_KEY = process.env.REACT_APP_API_KEY;
 
 
@@ -33,12 +35,14 @@ function CRMLogin() {
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
 
-
+  const handleRegistration = () => {
+    setOpenDialog(true);
+  };
 
   const handleLogin = async (event) => {
     event.preventDefault(); // Prevent default GET request
     try {
-      const res = await axios.post(`${API_URL}/auth/login`, {
+      const res = await axios.post(`${CRM_API_URL}/auth/login`, {
         "username": username,
         "password": password
       }, 
@@ -64,8 +68,6 @@ function CRMLogin() {
       'Too bad! 🤷' 
     );
   };
-                      
-
 
   return (
       <div className="flex h-screen flex-1 flex-col justify-center items-center bg-gradient-to-tr from-cyan-200 via-purple-100 to-yellow-200 px-6 py-12 lg:px-8">
@@ -126,16 +128,34 @@ function CRMLogin() {
             </div>
 
             <div className='flex justify-center items-center '>
-              <button
-                type="submit"
-                className="flex w-2/4 justify-center rounded-md bg-primary px-3 mt-4 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-purple-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            <div className="flex flex-col items-center w-full space-y-4">
+            <button
+              type="submit"
+              className="w-3/4 justify-center rounded-md bg-purple-400 px-4 py-2 text-base font-semibold text-white shadow-md hover:bg-pink-500 focus-visible:outline focus-visible:ring-2 focus-visible:ring-pink-500"
+            >
+            Log in
+            </button>
+            <button
+              type="button"
+              className="w-1/4 justify-center rounded-md bg-blue-400 px-4 py-2 text-base font-semibold text-white shadow-md hover:bg-blue-500 focus-visible:outline focus-visible:ring-2 focus-visible:ring-blue-500"
+              onClick={() => handleRegistration()} //open registration pop-up
               >
-                Log in
-              </button>
+            Register
+          </button>
+        </div>
+
+
+
             </div>
           </form>
 
         </div>
+
+      <RegistrationPopUp
+        open={openDialog}
+        setOpen = {setOpenDialog}
+      />
+
       </div>
   )
 }
