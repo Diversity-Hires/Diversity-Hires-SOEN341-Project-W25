@@ -4,6 +4,10 @@ import axios from 'axios';
 import Logo from '../images/AnimatedLogo.gif';
 import Notiflix from 'notiflix';
 
+// imports for front-end access to Firebase DB
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
 
 function CRMLogin() {
   const [username, setUsername] = useState('');
@@ -11,6 +15,25 @@ function CRMLogin() {
   
   const CRM_API_URL = process.env.REACT_APP_CRM_API_URL;
   const API_KEY = process.env.REACT_APP_API_KEY;
+
+
+  // Configure firebase connection
+  const firebaseConfig = {
+    apiKey: "AIzaSyCK3SV2WKNAEB9OdXqd5fee6K0tUjYsw4w",
+    authDomain: "chathaven-3b77a.firebaseapp.com",
+    databaseURL: "https://chathaven-3b77a-default-rtdb.firebaseio.com",
+    projectId: "chathaven-3b77a",
+    storageBucket: "chathaven-3b77a.firebasestorage.app",
+    messagingSenderId: "881824192229",
+    appId: "1:881824192229:web:3a68105be061f49432e60c",
+    measurementId: "G-6VMPWLPHQH"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+
+
 
   const handleLogin = async (event) => {
     event.preventDefault(); // Prevent default GET request
@@ -29,7 +52,7 @@ function CRMLogin() {
       // Save token in localStorage
       localStorage.setItem('token', res.data.token);
       // Redirect or navigate to crm page
-      window.location.href = '/crm';
+      window.location.href = '/home';
     } catch (error) {
       alert('Login failed');
       console.error('Login error:', error);
