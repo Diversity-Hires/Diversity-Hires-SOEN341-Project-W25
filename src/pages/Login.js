@@ -3,23 +3,57 @@ import React, { useState } from 'react';
 import { auth } from '../firebaseConfig';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import Logo from '../images/AnimatedLogo.gif';
+import Notiflix from 'notiflix';
+
+// imports for front-end access to Firebase DB
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
 
 function CRMLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  const CRM_API_URL = process.env.REACT_APP_CRM_API_URL;
+  const API_KEY = process.env.REACT_APP_API_KEY;
+
+
+  // Configure firebase connection
+  const firebaseConfig = {
+    apiKey: "AIzaSyCK3SV2WKNAEB9OdXqd5fee6K0tUjYsw4w",
+    authDomain: "chathaven-3b77a.firebaseapp.com",
+    databaseURL: "https://chathaven-3b77a-default-rtdb.firebaseio.com",
+    projectId: "chathaven-3b77a",
+    storageBucket: "chathaven-3b77a.firebasestorage.app",
+    messagingSenderId: "881824192229",
+    appId: "1:881824192229:web:3a68105be061f49432e60c",
+    measurementId: "G-6VMPWLPHQH"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+
+
 
   const handleLogin = async (event) => {
     event.preventDefault();
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      const idToken = await user.getIdToken();
+      const res = await axios.post(`${CRM_API_URL}/auth/login`, {
+        "username": username,
+        "password": password
+      }, 
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY // Include the API Key
+        }
+      }); 
 
-      // Store token locally
-      localStorage.setItem("token", idToken);
-
-      // Redirect to home page
-      window.location.href = "/home"; 
+      // Save token in localStorage
+      localStorage.setItem('token', res.data.token);
+      // Redirect or navigate to crm page
+      window.location.href = '/home';
     } catch (error) {
       alert("Login failed: " + error.message);
       console.error("Firebase Login Error:", error);

@@ -20,6 +20,7 @@
     "emailjs-com": "^3.2.0",
     "express": "^4.21.2",
     "firebase": "^11.3.0",
+    "firebase-admin": "^13.1.0",
     "fs": "^0.0.1-security",
     "helmet": "^8.0.0",
     "i18next": "^23.2.3",
