@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import {getAuth} from "firebase/auth";
+import {getFirestore} from "firebase/firestore";
 
 //If needed add more imports here
 // TODO: Add SDKs for Firebase products that you want to use
@@ -10,13 +11,13 @@ import {getAuth} from "firebase/auth";
 // The web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCK3SV2WKNAEB9OdXqd5fee6K0tUjYsw4w",
-  authDomain: "chathaven-3b77a.firebaseapp.com",
-  projectId: "chathaven-3b77a",
-  storageBucket: "chathaven-3b77a.firebasestorage.app",
-  messagingSenderId: "881824192229",
-  appId: "1:881824192229:web:3a68105be061f49432e60c",
-  measurementId: "G-6VMPWLPHQH"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
@@ -24,3 +25,5 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+export {app, auth};

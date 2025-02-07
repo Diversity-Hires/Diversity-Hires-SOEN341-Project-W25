@@ -1,12 +1,19 @@
 // crm_server.js
 require('dotenv').config({ path: '../../.env' }); //load .enc file from its location
 const express = require('express');
-const mysql = require('mysql2/promise');
+const admin = require('firebase-admin');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const helmet = require('helmet');
 
+// initialize firebase admin SDK
+const serviceAccount = require('/Users/moses/Desktop/SOEN 341/Diversity-Hires-SOEN341-Project-W25/backend/ChatHaven Firebase Admin SDK.json');
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const db = admin.firestore(); // Firestore Database reference 
 const app = express();
 
 const PORT = process.env.REACT_APP_CRM_SERVER_PORT;
@@ -17,7 +24,7 @@ app.use(cors());
 app.use(express.json());
 app.use((req, res, next) => {
   //print incoming requests for debugging
-  console.log(`Incoming request: ${req.method} ${req.path}  Name: ${req.body.firstName}`);
+  console.log(`Incoming request: ${req.method} ${req.path}`);
   next();
 });
 
@@ -31,30 +38,7 @@ function apiKeyMiddleware(req, res, next) {
   next();
 }
 
-// 1) DB Connection
-const pool = mysql.createPool({
-  host: process.env.REACT_APP_DB_HOST,
-  user: process.env.REACT_APP_DB_USER,
-  password: process.env.REACT_APP_DB_PASSWORD,
-  database: process.env.REACT_APP_DB_NAME,
-  port: process.env.REACT_APP_DB_PORT,
-  waitForConnections: true,
-  connectionLimit: 10
-});
-
-// Test connection using async/await
-(async () => {
-  try {
-    const [rows] = await pool.query('SELECT 1');
-    console.log('Connected to MySQL Database (Pool)');
-  } catch (err) {
-    console.error('Database connection failed:', err.message);
-    process.exit(1);
-  }
-})();
-
-
-// 2) Auth Middleware (JWT)
+// Auth Middleware (JWT)
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -74,12 +58,12 @@ function authMiddleware(req, res, next) {
 }
 
 
-// CRM Health Check Endpoint - adapted for mysql2/promise
+// CRM Health Check Endpoint - Check if CRM server is running for Firebase
 app.get('/api/health', async (req, res) => {
   try {
-      const connection = await pool.getConnection();
-      await connection.ping();
-      connection.release();
+      await db.collection('healthCheck').doc('status').set({ status: 'OK',timestamp: new Date()
+
+      })
       res.status(200).json({ crm_status: 'OK', database: 'Connected' });
   } catch (err) {
       res.status(500).json({ status: 'Database unreachable', error: err.message });
@@ -90,24 +74,29 @@ app.get('/api/health', async (req, res) => {
 
 // Login
 app.post('/api/auth/login', apiKeyMiddleware, async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
   try {
-    const [rows] = await pool.query('SELECT * FROM crm_users WHERE username = ?', [username]);
-    if (!rows.length) {
+   const userRef = db.colllection('users').doc(email);
+   const userDoc = await userRef.get();
+   if (!userDoc.exists){
       return res.status(401).json({ success: false, message: 'Invalid credentials: user not found' });
     }
-    const user = rows[0];
+
+    const user = userDoc.data();
     const match = await bcrypt.compare(password, user.password);
+
     if (!match) {
       console.error('Failed CRM login attempt detected');
       return res.status(401).json({ success: false, message: 'Invalid credentials: incorrect password' });
     }
+  
     // Handle successful login
     console.warn("Successful CRM login")
     // Generate token
-    const token = jwt.sign({ id: user.id }, process.env.REACT_APP_JWT_SECRET, {
+    const token = jwt.sign({ id: email }, process.env.REACT_APP_JWT_SECRET, {
       expiresIn: '1d'
     });
+
     return res.json({ token });
   } catch (error) {
     console.error('Login error:', error);
@@ -121,20 +110,74 @@ app.post('/api/auth/register', async (req, res) => {
   const { email, password } = req.body;
   try {
     // check if user exists
-    const [existing] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (existing.length) {
-      return res.status(400).json({ message: 'Email already in use.' });
+    const userRef = db.collection('users').doc(email);
+    const userDoc = await userRef.get();
+
+    if (userDoc.exists){
+      return res.status(400).json({ success: false, message: 'Email is already in use' });
     }
-    // hash password
-    const hashed = await bcrypt.hash(password, 10);
-    await pool.query('INSERT INTO users (email, password) VALUES (?, ?)', [email, hashed]);
-    return res.json({ message: 'User registered successfully.' });
-  } catch (error) {
-    console.error('Register error:', error);
+
+    //Hash Password
+
+    const hashedPassword = await bcrypt.hash(password, 10); 
+
+    await userRef.set({
+      email,
+      password:hashedPassword,
+      createdAt: adminf.irestore.FieldValue.serverTimestamp(),
+    })
+    return res.json({ message : 'User regesitered successfully.'});
+  }
+    catch (error){
+      console.error('Registration error:', error);
+      return res.status(500).json({ message: 'Server error.' });
+    }
+});
+
+// Get all users
+
+app.get('/api/users/:email', async (req, res) => {
+  try {
+    const userSnapshot = await db.collection('users').get();
+    const users = userSnapshot.docs.map(doc => ({id : DiagnosticCategory.id, ...doc.data()}));
+    res.json(users);
+  }
+  catch (error){
+    console.error('Get users error:', error);
     return res.status(500).json({ message: 'Server error.' });
   }
 });
 
+// Get a single user
+
+app.get('/api/users/:email', async (req, res) => {
+  try {
+    const userRef = db.collection ('users').doc(req.params.email);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists){
+      return res.status(404).json({message : 'User not found'});
+    }
+    res.json(userDoc.data());
+  }
+  catch (error){
+    console.error('GError fetching user:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+// Delete a user
+app.delete('/api/users/:email', async (req, res) => {
+  try {
+    const userRef = db.collection("users").doc(req.params.email);
+    await userRef.delete();
+    res.json({message: 'User deleted successfully'});
+  }
+  catch (error){
+    console.error('Error deleting user:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
 
 
 // ================ START SERVER ================
