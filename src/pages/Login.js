@@ -58,7 +58,9 @@ function CRMLogin() {
       // Redirect or navigate to crm page
       window.location.href = '/home';
     } catch (error) {
-      alert('Login failed');
+      Notiflix.Notify.failure(
+        "Login failed: Invalid Credentials!"
+      );
       console.error('Login error:', error);
     }
   };
