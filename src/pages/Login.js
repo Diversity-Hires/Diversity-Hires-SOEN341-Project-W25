@@ -10,7 +10,7 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 
 
-function CRMLogin() {
+function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
@@ -130,10 +130,10 @@ function CRMLogin() {
             </div>
 
             <div className='flex justify-center items-center '>
-            <div className="flex flex-col items-center w-full space-y-4">
+            <div className="flex flex-col items-center w-full space-y-6 mt-2">
             <button
               type="submit"
-              className="w-3/4 justify-center rounded-md bg-purple-400 px-4 py-2 text-base font-semibold text-white shadow-md hover:bg-pink-500 focus-visible:outline focus-visible:ring-2 focus-visible:ring-pink-500"
+              className="w-2/4 justify-center rounded-md bg-purple-400 px-4 py-2 text-base font-semibold text-white shadow-md hover:bg-pink-500 focus-visible:outline focus-visible:ring-2 focus-visible:ring-pink-500"
             >
             Log in
             </button>
@@ -146,8 +146,6 @@ function CRMLogin() {
           </button>
         </div>
 
-
-
             </div>
           </form>
 
@@ -156,10 +154,12 @@ function CRMLogin() {
       <RegistrationPopUp
         open={openDialog}
         setOpen = {setOpenDialog}
+        user = {username}
+        pass = {password}
       />
 
       </div>
   )
 }
 
-export default CRMLogin;
+export default Login;
