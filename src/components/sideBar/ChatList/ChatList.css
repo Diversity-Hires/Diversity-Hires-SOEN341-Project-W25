@@ -1,0 +1,33 @@
+.ChatList{
+    overflow: auto;
+}
+.Research{
+    display:flex;
+    
+}
+.Research .Bar{
+    display:flex;
+    align-items: center;
+
+}
+.Research img{
+    height:20px;
+    width:20px;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.Bar{
+    background-color: grey;
+    border-radius: 10px;
+    display:flex;
+    flex:1;
+}
+
+input{
+    background-color: transparent;
+    flex:1;
+    border-radius: 10px;
+    border: none;
+    color:white;    
+}
