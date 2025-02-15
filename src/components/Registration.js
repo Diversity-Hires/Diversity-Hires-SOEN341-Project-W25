@@ -173,6 +173,7 @@ export default function Registration({ open, setOpen, user, pass }) {
                                                 Register
                                             </button>
                                         </div>
+
                                     </form>
                                 </div>
                             </Dialog.Panel>
