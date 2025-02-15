@@ -24,5 +24,6 @@ ChatHaven is a streamlined communication platform designed to provide seamless i
 To use this webapp:
 1. Clone the repository to your local machine, 
 2. run `npm install` to install all the required dependencies
-3. run `npm start` to view the website locally
-4. run `node ./backend/server.js` to start the back-end server
+3. Check react version with ` npm list react` if not react 18 use `npm install react@18 react-dom@18`
+4. run `npm start` to view the website locally
+5. run `node ./backend/server.js` to start the back-end server
