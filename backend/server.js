@@ -130,7 +130,7 @@ app.post('/api/auth/login', apiKeyMiddleware, async (req, res) => {
 
 
 
-// // Register
+// Register
 app.post('/api/auth/register', apiKeyMiddleware, async (req, res) => {
   const { username, password } = req.body;
   try {
