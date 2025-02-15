@@ -13,7 +13,7 @@ export default function Sidebar({ servers }) {
             {/* Search Bar */}
 
             <div className="flex items-center gap-4 w-full">
-                
+
                 {/* Search Input Container */}
                 <div className="relative flex-1">
                     <input
