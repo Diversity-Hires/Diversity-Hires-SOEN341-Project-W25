@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import createServerPopUp from '../components/CreateGroup';
 import bubble1 from '../images/bubbles/1.png';
 import bubble2 from '../images/bubbles/2.png';
 import bubble3 from '../images/bubbles/3.png';
 
-export default function Sidebar({ servers }) {
+export default function Sidebar({ servers, openCreateServer }) {
   const [search, setSearch] = useState('');
 
   // 1) Put bubble images in an array
@@ -61,8 +62,11 @@ export default function Sidebar({ servers }) {
           </div>
         </div>
 
-        {/* Additional Icon */}
-        <div>
+        {/* Create Server Icon */}
+        <button
+            onClick={openCreateServer}
+            className='text-violet-800 hover:scale-110'
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -77,7 +81,8 @@ export default function Sidebar({ servers }) {
               d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
             />
           </svg>
-        </div>
+        </button>
+
       </div>
 
       {/* Server List */}

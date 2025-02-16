@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import Sidebar from '../components/Sidebar.js'
 import Chat from '../components/Chat.js'
-import Details from '../components/details/Details.jsx'
+//import Details from '../components/details/Details.jsx'
 import Navbar from '../components/Navbar.js'
 import {jwtDecode} from 'jwt-decode';
 
@@ -10,6 +10,8 @@ import {jwtDecode} from 'jwt-decode';
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getDatabase, ref, get } from 'firebase/database';
+import CreateServerPopUp from '../components/CreateGroup';
+
 
 
 function Home() {
@@ -17,9 +19,15 @@ function Home() {
   const [selectedServer, setSelectedServer] = useState(null);
   const [userServers, setUserServers] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
+  const [userList, setUserList] = useState([]);
   const token = localStorage.getItem('token');
 
   const currentUser = jwtDecode(token).id || '';
+
+  const handleCreateServer = () => {
+    setOpenCreateServerDialog(true);
+  };
 
   // Configure firebase connection
   const firebaseConfig = {
@@ -58,6 +66,7 @@ function Home() {
   useEffect(() => {
     if (currentUser) {
       getServers();
+      getUsers();
     }
   }, [currentUser]);
 
@@ -69,7 +78,7 @@ function Home() {
     get(serversRef)
       .then((snapshot) => {
         if (snapshot.exists()) {
-          const data = snapshot.val(); // e.g., { abc123: "Server Name A", xyz789: "Server Name B" }
+          const data = snapshot.val(); // e.g., { 165: "Server Name A", 456: "Server Name B" }
           
           // Convert to array of { id, name } objects
           const serversArray = Object.entries(data).map(([id, name]) => ({ 
@@ -87,6 +96,32 @@ function Home() {
       });
   }
 
+  
+  function getUsers() {
+    const db = getDatabase();
+    const usersRef = ref(db, 'users');
+
+    get(usersRef)
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          const users = [];
+          
+          // iterate over all users and add to array
+          snapshot.forEach((child) => {
+            users.push(child.key);
+            //console.log(child.key)
+          });
+          
+          setUserList(users);
+        }else{
+          setUserList([]);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching users:', error);
+        setUserList([]);
+      });
+  }
  
 
   return(
@@ -99,6 +134,7 @@ function Home() {
 
         <Sidebar 
         servers={userServers} 
+        openCreateServer={handleCreateServer}
         className="w-64 min-w-32 flex-shrink-0" 
         />
 
@@ -109,6 +145,12 @@ function Home() {
         </div>
         
       </div>
+      <CreateServerPopUp
+              open={openCreateServerDialog}
+              setOpen = {setOpenCreateServerDialog}
+              currentUser={currentUser}
+              userList = {userList}
+            />
     </div>
   );
 
