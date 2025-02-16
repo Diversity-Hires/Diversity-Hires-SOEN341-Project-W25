@@ -82,8 +82,32 @@ function authMiddleware(req, res, next) {
   });
 }
 
+// Utility function to generate a unique 3-digit server ID
+async function generateServerId() {
+  let serverId;
+  let snapshot;
 
-// CRM Health Check Endpoint - adapted for mysql2/promise
+  do {
+    // random integer between 100 and 999
+    const randomInt = Math.floor(Math.random() * 900) + 100;
+    serverId = randomInt.toString();
+
+    // Check if this ID already exists
+    snapshot = await db.ref(`servers/${serverId}`).once('value');
+  } while (snapshot.exists());
+
+  return serverId;
+}
+
+// Check if user exists
+async function checkUser(username) {
+  const usersRef = db.ref(`users/${username}`);
+  const userSnapshot = await usersRef.once('value');
+  return userSnapshot.exists()
+}
+
+
+//Health Check Endpoint - adapted for mysql2/promise
 app.get('/api/health', async (req, res) => {
   try {
       // We'll just do a quick read from a root node or a test node
@@ -116,7 +140,7 @@ app.post('/api/auth/login', apiKeyMiddleware, async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials: incorrect password' });
     }
     // Handle successful login
-    console.warn("Successful CRM login")
+    console.warn("Successful login")
     // Generate token
     const token = jwt.sign({ id: username }, process.env.REACT_APP_JWT_SECRET, {
       expiresIn: '1d'
@@ -156,44 +180,61 @@ app.post('/api/auth/register', apiKeyMiddleware, async (req, res) => {
 // Add a new server
 app.post('/api/new-server', apiKeyMiddleware, authMiddleware, async (req, res) => {
   try {
-    const { server_name, users } = req.body; 
-    // server_name: string | users: array of usernames (optional)
+    const { serverName, users } = req.body; 
+    // serverName: string
+    // users: array of usernames (optional)
 
-    // Basic validation
-    if (!server_name) {
-      return res.status(400).json({ message: 'server_name is required.' });
+    if (!serverName) {
+      return res.status(400).json({ message: 'serverName is required.' });
     }
 
-    // Check if server already exists
-    const serverRef = db.ref('servers').child(server_name);
-    const existingServerSnapshot = await serverRef.once('value');
-    if (existingServerSnapshot.exists()) {
-      return res.status(400).json({ message: 'Server already exists.' });
-    }
+    // Step 1: Generate a unique 3-digit server ID
+    const serverId = await generateServerId();
 
-    // Prepare default structure for the new server
-    // (You can adjust this as your app grows, e.g. channels, etc.)
+    // Step 2: Prepare the new server data
     const newServerData = {
-      channels: {},
-      users: {} 
+      name: serverName,
+      channels: {},    // e.g. { general: {...}, etc. }
+      users: {},       // map of username -> role
     };
-    newServerData.users[req.userId] = 'admin'; // The user who created the server is the admin
-    // If an array of users was sent, add them with a default role (e.g. "member")
+
+    // The user who created the server is admin
+    newServerData.users[req.userId] = 'admin'; 
+
+    // Build an array of users that exis
+    const validatedUsers = [];
+
+    // If we have an array of additional users, add them as members
     if (Array.isArray(users)) {
-      users.forEach((username) => {
-        newServerData.users[username] = 'member';
-      });
+      for (const username of users) {
+        // Check if user exists and remove from list if not
+        if (await checkUser(username)) { // Ensure await is used inside for...of
+          newServerData.users[username] = 'member';
+          validatedUsers.push(username);
+        }
+      }
     }
 
-    // Write new server to the database
-    await serverRef.set(newServerData);
+    // Step 3: Write the new server to /servers/{serverId}
+    await db.ref(`servers/${serverId}`).set(newServerData);
+
+    // Step 4: Update each user's server list
+    // This includes the creator, so let's build an array of unique usernames
+    const userList = new Set([req.userId, ...(validatedUsers || [])]);
+
+    userList.forEach(async (username) => {
+      await db
+        .ref(`users/${username}/servers/${serverId}`)
+        .set(serverName);
+    });
 
     return res.status(201).json({
       message: 'Server created successfully.',
       server: {
-        name: server_name,
-        users: users || []
-      }
+        id: serverId,
+        name: serverName,
+        users: [...userList],
+      },
     });
   } catch (error) {
     console.error('Error creating server:', error);
@@ -202,27 +243,45 @@ app.post('/api/new-server', apiKeyMiddleware, authMiddleware, async (req, res) =
 });
 
 
+
+
 // Add a user to a server
 app.post('/api/servers/add-user', apiKeyMiddleware, authMiddleware, async (req, res) => {
   try {
-    const { serverName, username, role } = req.body; 
+    const { serverId, username, role } = req.body; 
     // username: string, role: optional (e.g. "member", "admin", etc.)
 
     // Validate input
-    if (!serverName || !username) {
-      return res.status(400).json({ message: 'Missing required fields: serverName or username.' });
+    if (!serverId || !username) {
+      return res.status(400).json({ message: 'Missing required fields: serverId or username.' });
     }
 
     // Check if the server exists
-    const serverRef = db.ref(`servers/${serverName}`);
+    const serverRef = db.ref(`servers/${serverId}`);
     const serverSnapshot = await serverRef.once('value');
     if (!serverSnapshot.exists()) {
       return res.status(404).json({ message: 'Server not found.' });
     }
 
+    // Check if the username exists
+    if(!(await checkUser(username))){
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
     // Add or update this user under /servers/<serverName>/users/<username>
     // If no role is provided, default to 'member'
     await serverRef.child('users').child(username).set(role || 'member');
+
+    const serverName = (await serverRef.child('name').once('value')).val(); //get and assign the name of the server in one line
+
+    // Add the server to the list under /users/<username>/servers
+    const userServersRef = db.ref(`users/${username}/servers/${serverId}`);
+    const userServersSnaphot = await userServersRef.once('value');
+    if(!userServersSnaphot.exists()){
+      await db
+          .ref(`users/${username}/servers/${serverId}`)
+          .set(serverName);
+    }
 
     return res.status(200).json({ 
       message: `User "${username}" added to server "${serverName}" successfully!`
