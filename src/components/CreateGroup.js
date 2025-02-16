@@ -5,17 +5,24 @@ import axios from "axios";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import Notiflix from "notiflix";
 
+
+// Assume you have your API_URL and API_KEY somewhere (env or config)
 const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
-export default function CreateGroup({ open, setOpen, userList }) {
+export default function CreateGroup({ open, setOpen, userList, currentUser }) {
   const [groupData, setGroupData] = useState({
-    name: "",
-    description: "",
+    name: '',
+    description: '',
     members: [],
   });
 
-  // Handle input changes
+  const token = localStorage.getItem('token');
+
+  // Filter out the current user
+  const displayUsers = userList.filter((u) => u !== currentUser);
+
+  // 1. Handle text/textarea changes
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setGroupData((prevState) => ({
@@ -24,44 +31,52 @@ export default function CreateGroup({ open, setOpen, userList }) {
     }));
   };
 
-  // Handle member selection
-  const handleMemberSelect = (event) => {
-    const selectedUser = event.target.value;
-    if (!groupData.members.includes(selectedUser)) {
-      setGroupData((prevState) => ({
+  //Toggle a user on/off the members list
+  const toggleMember = (username) => {
+    setGroupData((prevState) => {
+      if (prevState.members.includes(username)) {
+        // Remove if already selected
+        return {
+          ...prevState,
+          members: prevState.members.filter((u) => u !== username),
+        };
+      }
+      // Otherwise, add
+      return {
         ...prevState,
-        members: [...prevState.members, selectedUser],
-      }));
-    }
+        members: [...prevState.members, username],
+      };
+    });
   };
 
-  // Handle form submission
+  //Create group on form submit
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const res = await axios.post(
-        `${API_URL}/groups/create`,
+      await axios.post(
+        `${API_URL}/new-server`,
         {
-          name: groupData.name,
-          description: groupData.description,
-          members: groupData.members,
+          serverName: groupData.name,
+          //description: groupData.description,
+          users: groupData.members,
         },
         {
           headers: {
-            "Content-Type": "application/json",
-            "x-api-key": API_KEY,
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY,
           },
         }
       );
 
-      Notiflix.Notify.success("Group created successfully!");
-      setGroupData({ name: "", description: "", members: [] });
+      Notiflix.Notify.success('Server created successfully!');
+      setGroupData({ name: '', description: '', members: [] });
       setOpen(false);
     } catch (error) {
       Notiflix.Notify.failure(
-        error.response?.data?.message || "Failed to create group."
+        error.response?.data?.message || 'Failed to create server.'
       );
-      console.error("Group creation error:", error);
+      console.error('Server creation error:', error);
     }
   };
 
@@ -106,19 +121,22 @@ export default function CreateGroup({ open, setOpen, userList }) {
 
                 {/* Form Section */}
                 <div className="px-6 py-6">
-                  <h3 className="text-base/7 font-semibold text-gray-900">
-                    Create a New Group
+                  <h3 className="text-base font-semibold text-gray-900">
+                    Create a New Server
                   </h3>
-                  <p className="mt-1 text-sm/6 text-gray-900">
-                    Enter group details below
+                  <p className="mt-1 text-sm text-gray-900">
+                    Enter server details below
                   </p>
 
-                  <form onSubmit={handleSubmit} className="mt-6 border-t border-gray-100">
+                  <form
+                    onSubmit={handleSubmit}
+                    className="mt-6 border-t border-gray-100"
+                  >
                     <dl className="divide-y divide-gray-100">
-                      {/* Group Name */}
+                      {/* Server Name */}
                       <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
                         <dt className="text-sm font-medium text-gray-900">
-                          Group Name
+                          Server Name
                         </dt>
                         <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
                           <input
@@ -131,7 +149,7 @@ export default function CreateGroup({ open, setOpen, userList }) {
                         </dd>
                       </div>
 
-                      {/* Group Description */}
+                      {/* Server Description */}
                       <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
                         <dt className="text-sm font-medium text-gray-900">
                           Description
@@ -145,16 +163,49 @@ export default function CreateGroup({ open, setOpen, userList }) {
                           />
                         </dd>
                       </div>
+
+                      {/* Member Selection */}
+                      <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                        <dt className="text-sm font-medium text-gray-900">
+                          Members
+                        </dt>
+                        <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
+                          <div className="grid grid-cols-2 flex flex-col gap-2">
+                            {displayUsers.map((user) => {
+                              const isSelected = groupData.members.includes(user);
+                              return (
+                                <div
+                                  key={user}
+                                  onClick={() => toggleMember(user)}
+                                  className={`cursor-pointer px-3 py-2 rounded-md transition-colors ${
+                                    isSelected ? 'bg-blue-200' : 'bg-white'
+                                  } hover:bg-blue-100`}
+                                >
+                                  <span className="text-sm text-gray-800">
+                                    {user}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </dd>
+                      </div>
                     </dl>
 
                     {/* Buttons */}
                     <div className="mt-6 flex items-center justify-end px-3 py-3 gap-x-6">
-                      <button type="button" onClick={() => setOpen(false)} className="text-sm font-semibold text-gray-900">
+                      <button
+                        type="button"
+                        onClick={() => setOpen(false)}
+                        className="text-sm font-semibold text-gray-900"
+                      >
                         Cancel
                       </button>
-
-                      <button type="submit" className="rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-400">
-                        Create Group
+                      <button
+                        type="submit"
+                        className="rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-400"
+                      >
+                        Create Server
                       </button>
                     </div>
                   </form>
