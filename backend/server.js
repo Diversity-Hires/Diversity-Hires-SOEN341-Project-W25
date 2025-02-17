@@ -191,7 +191,7 @@ app.post('/api/new-server', apiKeyMiddleware, authMiddleware, async (req, res) =
     // Step 1: Generate a unique 3-digit server ID
     const serverId = await generateServerId();
 
-    // Step 2: Prepare the new server data
+    // Step 2: Format of the server Data
     const newServerData = {
       name: serverName,
       channels: {},    // e.g. { general: {...}, etc. }
