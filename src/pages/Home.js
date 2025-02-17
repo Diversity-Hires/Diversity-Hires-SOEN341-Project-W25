@@ -30,7 +30,6 @@ function Home() {
 
   const handleCreateServer = () => {
     setOpenCreateServerDialog(true);
-    getServerUsers();
   };
 
   const handleAddUser = () => {
