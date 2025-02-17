@@ -88,11 +88,10 @@ export default function Navbar({user}) {
                                     <span className="sr-only">Open user menu</span>
                                     <div className="flex justify center items-center gap-2">
                                         <UserIcon aria-hidden="true" className="size-6" />
+                                        {/* display current user */}
                                         {user}
                                         </div>
                                 </MenuButton>
-                                {/* display current user */}
-                                
                                 
                             
                             <MenuItems

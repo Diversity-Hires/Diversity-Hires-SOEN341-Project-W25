@@ -9,8 +9,9 @@ import {jwtDecode} from 'jwt-decode';
 // imports for front-end access to Firebase DB
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getDatabase, ref, get } from 'firebase/database';
+import { getDatabase, ref, get, onValue, off } from 'firebase/database';
 import CreateServerPopUp from '../components/CreateGroup';
+import AddUserPopUp from '../components/Add_user'
 
 
 
@@ -19,14 +20,22 @@ function Home() {
   const [selectedServer, setSelectedServer] = useState(null);
   const [userServers, setUserServers] = useState([]);
   const [messages, setMessages] = useState([]);
-  const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
   const [userList, setUserList] = useState([]);
-  const token = localStorage.getItem('token');
+  const [selectedServerUsers, setSelectedServerUsers] = useState(null);
+  const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
+  const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
 
+  const token = localStorage.getItem('token');
   const currentUser = jwtDecode(token).id || '';
 
   const handleCreateServer = () => {
     setOpenCreateServerDialog(true);
+    getServerUsers();
+  };
+
+  const handleAddUser = () => {
+    
+    setOpenAddUserDialog(true);
   };
 
   // Configure firebase connection
@@ -45,23 +54,18 @@ function Home() {
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app)
 
-  // Fetch messages when a server is selected
-  // useEffect(() => {
-  //   if (!selectedServer) return;
 
-  //   const messagesRef = collection(db, `servers/${selectedServer.id}/messages`);
-  //   const q = query(messagesRef, orderBy('timestamp', 'asc'));
+  //Fetch messages when a server is selected
+  useEffect(() => {
+    if (!selectedServer) {
+      setMessages([]);
+      setSelectedServerUsers(null);
+      return;
+    }
+    getMessagesForServer();
+    getServerUsers();
+  }, [selectedServer]);
 
-  //   const unsubscribe = onSnapshot(q, (snapshot) => {
-  //     const fetchedMessages = snapshot.docs.map(doc => ({
-  //       id: doc.id,
-  //       ...doc.data()
-  //     }));
-  //     setMessages(fetchedMessages);
-  //   });
-
-  //   return () => unsubscribe(); // Clean up listener
-  // }, [selectedServer]);
 
   useEffect(() => {
     if (currentUser) {
@@ -71,6 +75,48 @@ function Home() {
   }, [currentUser]);
 
 
+  function isAdmin() {
+    // If we haven't loaded the server users yet, or currentUser doesn't exist, default to false
+    if (!selectedServerUsers || !currentUser) return false;
+  
+    // Try to find the currentUser in selectedServerUsers
+    const found = selectedServerUsers.find(
+      (u) => u.username === currentUser
+    );
+  
+    // Return true if found user's role is 'admin'
+    return found?.role === 'admin';
+  }
+
+  
+  // Function to fetch messages from Realtime DB
+  function getMessagesForServer() {
+    const db = getDatabase();
+    const messagesRef = ref(db, `servers/${selectedServer.id}/messages`);
+
+    // Turn off any old listener first, to avoid duplicates if selectedServer changes
+    off(messagesRef);
+
+    // Real-time listener for this server's messages
+    onValue(messagesRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val(); // { msgKey1: {...}, msgKey2: {...} }
+        // Convert to an array
+        const loadedMessages = Object.entries(data).map(([key, msg]) => ({
+          id: key,
+          ...msg,
+        }));
+        // Sort by timestamp ascending if you want chronological order
+        loadedMessages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        setMessages(loadedMessages);
+      } else {
+        setMessages([]);
+      }
+    });
+  }
+
+
+// Function to get the list of servers for the user
   function getServers() {
     const db = getDatabase();
     const serversRef = ref(db, `users/${currentUser}/servers`);
@@ -96,7 +142,8 @@ function Home() {
       });
   }
 
-  
+
+  // Function to get the list of all users
   function getUsers() {
     const db = getDatabase();
     const usersRef = ref(db, 'users');
@@ -109,7 +156,6 @@ function Home() {
           // iterate over all users and add to array
           snapshot.forEach((child) => {
             users.push(child.key);
-            //console.log(child.key)
           });
           
           setUserList(users);
@@ -120,6 +166,35 @@ function Home() {
       .catch((error) => {
         console.error('Error fetching users:', error);
         setUserList([]);
+      });
+  }
+
+  // Function to get the list of the members and admins of current selected server
+  function getServerUsers() {
+    const db = getDatabase();
+    const usersRef = ref(db, `servers/${selectedServer.id}/users`);
+
+    get(usersRef)
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          const users = [];
+          
+          // iterate over all users and add to array
+          snapshot.forEach((child) => {
+            users.push({
+              username: child.key, // username
+              role: child.val()    // role
+            });
+          });
+          
+          setSelectedServerUsers(users);
+        }else{
+          setSelectedServerUsers(null);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching users for this server:', error);
+        setSelectedServerUsers(null);
       });
   }
  
@@ -134,22 +209,37 @@ function Home() {
 
         <Sidebar 
         servers={userServers} 
+        setSelectedServer={setSelectedServer}
         openCreateServer={handleCreateServer}
         className="w-64 min-w-32 flex-shrink-0" 
         />
 
         <div className="flex-1 flex flex-col overflow-hidden">
-
-          <Chat className="flex-1 overflow-auto" />
-
+          <Chat
+            messages={messages}
+            selectedServer={selectedServer}
+            openAddUser={handleAddUser}
+            isAdmin={isAdmin()}  
+            className="flex-1 overflow-auto"
+          />
         </div>
         
       </div>
+
+      {/* Dialogs */}
       <CreateServerPopUp
               open={openCreateServerDialog}
               setOpen = {setOpenCreateServerDialog}
               currentUser={currentUser}
               userList = {userList}
+            />
+      
+      <AddUserPopUp
+              open={openAddUserDialog}
+              setOpen = {setOpenAddUserDialog}
+              serverId={selectedServer?.id || ""}
+              userList = {userList}
+              serverUsers = {selectedServerUsers}
             />
     </div>
   );
