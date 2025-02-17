@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import createServerPopUp from '../components/CreateGroup';
 import bubble1 from '../images/bubbles/1.png';
 import bubble2 from '../images/bubbles/2.png';
 import bubble3 from '../images/bubbles/3.png';
 
-export default function Sidebar({ servers, openCreateServer }) {
+export default function Sidebar({ servers, openCreateServer, setSelectedServer}) {
   const [search, setSearch] = useState('');
 
   // 1) Put bubble images in an array
@@ -32,7 +31,7 @@ export default function Sidebar({ servers, openCreateServer }) {
   );
 
   return (
-    <div className="w-1/5 h-screen bg-gradient-to-tr from-cyan-200 via-purple-100 to-yellow-200 text-blue-900 flex flex-col p-4 space-y-4">
+    <div className="flex overflow-y-auto w-1/5 bg-gradient-to-tr from-cyan-200 via-purple-100 to-yellow-200 text-blue-900 flex flex-col p-4 space-y-4">
       {/* Search Bar */}
       <div className="flex items-center gap-4 w-full">
         <div className="relative flex-1">
@@ -90,7 +89,11 @@ export default function Sidebar({ servers, openCreateServer }) {
         {filteredServers.length > 0 ? (
           <ul className="flex flex-col items-center space-y-4 mb-4">
             {filteredServers.map((server) => (
-              <li key={server.id} className="relative group cursor-pointer">
+              <li 
+              key={server.id} 
+              onClick={() => setSelectedServer(server)}
+              className="relative group cursor-pointer">
+
                 {/* Bubble image, grows on hover */}
                 <img
                   src={serverBubbles[server.id]}
