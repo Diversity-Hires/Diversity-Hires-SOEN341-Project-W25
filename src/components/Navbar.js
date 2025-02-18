@@ -34,7 +34,7 @@ export default function Navbar({user}) {
     return (
         <>
             <div className="min-h-full">
-                <Disclosure as="nav" className="bg-gradient-to-t from-purple-200 to-purple-400 text-violet-800 ">
+                <Disclosure as="nav" className="bg-gradient-to-t from-purple-200 to-purple-400 text-violet-800">
                 <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
                     <div className="flex h-20 items-center justify-between"> 
     
@@ -46,7 +46,7 @@ export default function Navbar({user}) {
                                 <img
                                     alt="Your Company"
                                     src={Logo}
-                                    className="h-12 md:h-14 lg:h-16 xl:h-20 mr-2"
+                                    className="h-12 md:h-14 lg:h-16 xl:h-20 mr-2 ml-3"
                                 />
                             </div>
                             <div className="hidden md:block">
@@ -58,7 +58,7 @@ export default function Navbar({user}) {
                                     aria-current={item.current ? 'page' : undefined}
                                     className={classNames(
                                     item.current ? 'bg-violet-800 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                                    'rounded-md px-3 py-2 text-sm font-medium',
+                                    'rounded-md px-3 py-2 text-sm',
                                     )}
                                 >
                                     {item.name}
@@ -89,7 +89,7 @@ export default function Navbar({user}) {
                                     <div className="flex justify center items-center gap-2">
                                         <UserIcon aria-hidden="true" className="size-6" />
                                         {/* display current user */}
-                                        {user}
+                                        <span className="text-base">{user}</span>
                                         </div>
                                 </MenuButton>
                                 
@@ -152,7 +152,7 @@ export default function Navbar({user}) {
                         aria-current={item.current ? 'page' : undefined}
                         className={classNames(
                             item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                            'block rounded-md px-3 py-2 text-base font-medium',
+                            'block rounded-md px-3 py-2 text-base',
                         )}
                         >
                         {item.name}
@@ -165,8 +165,8 @@ export default function Navbar({user}) {
                         <img alt="" src={user.imageUrl} className="size-10 rounded-full" />
                         </div>
                         <div className="ml-3">
-                        <div className="text-base/5 font-medium text-white">{user.name}</div>
-                        <div className="text-sm font-medium text-gray-400">{user.email}</div>
+                        <div className="text-base/5 text-white">{user.name}</div>
+                        <div className="text-sm text-gray-400">{user.email}</div>
                         </div>
                         <button
                         type="button"
@@ -184,7 +184,7 @@ export default function Navbar({user}) {
                                 as={item.onClick ? "button" : "a"}
                                 href={item.href}
                                 onClick={item.onClick ? item.onClick : undefined}
-                                className="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
+                                className="block w-full text-left rounded-md px-3 py-2 text-base text-gray-400 hover:bg-gray-700 hover:text-white"
                             >
                                 {item.name}
                             </DisclosureButton>

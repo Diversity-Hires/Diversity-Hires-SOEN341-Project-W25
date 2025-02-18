@@ -82,7 +82,7 @@ export default function CreateGroup({ open, setOpen, userList, currentUser }) {
 
   return (
     <Transition show={open} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={() => setOpen(false)}>
+      <Dialog as="div" className="relative z-30" onClose={() => setOpen(false)}>
         {/* Backdrop */}
         <Transition.Child
           as={Fragment}
@@ -121,7 +121,7 @@ export default function CreateGroup({ open, setOpen, userList, currentUser }) {
 
                 {/* Form Section */}
                 <div className="px-6 py-6">
-                  <h3 className="text-base font-semibold text-gray-900">
+                  <h3 className="text-lg font-medium text-gray-900">
                     Create a New Server
                   </h3>
                   <p className="mt-1 text-sm text-gray-900">
@@ -135,7 +135,7 @@ export default function CreateGroup({ open, setOpen, userList, currentUser }) {
                     <dl className="divide-y divide-gray-100">
                       {/* Server Name */}
                       <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                        <dt className="text-sm font-medium text-gray-900">
+                        <dt className="text-sm text-gray-900">
                           Server Name
                         </dt>
                         <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
@@ -151,7 +151,7 @@ export default function CreateGroup({ open, setOpen, userList, currentUser }) {
 
                       {/* Server Description */}
                       <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                        <dt className="text-sm font-medium text-gray-900">
+                        <dt className="text-sm text-gray-900">
                           Description
                         </dt>
                         <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
@@ -166,7 +166,7 @@ export default function CreateGroup({ open, setOpen, userList, currentUser }) {
 
                       {/* Member Selection */}
                       <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                        <dt className="text-sm font-medium text-gray-900">
+                        <dt className="text-sm text-gray-900">
                           Members
                         </dt>
                         <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
@@ -197,13 +197,13 @@ export default function CreateGroup({ open, setOpen, userList, currentUser }) {
                       <button
                         type="button"
                         onClick={() => setOpen(false)}
-                        className="text-sm font-semibold text-gray-900"
+                        className="text-sm font-medium text-gray-900"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
                       >
                         Create Server
                       </button>

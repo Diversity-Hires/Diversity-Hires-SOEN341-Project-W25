@@ -3,7 +3,7 @@ import bubble1 from '../images/bubbles/1.png';
 import bubble2 from '../images/bubbles/2.png';
 import bubble3 from '../images/bubbles/3.png';
 
-export default function Sidebar({ servers, openCreateServer, setSelectedServer}) {
+export default function Sidebar({ servers, openCreateServer, setSelectedServer, selectedServer}) {
   const [search, setSearch] = useState('');
 
   // 1) Put bubble images in an array
@@ -31,7 +31,7 @@ export default function Sidebar({ servers, openCreateServer, setSelectedServer})
   );
 
   return (
-    <div className="flex overflow-y-auto w-1/5 bg-gradient-to-tr from-cyan-200 via-purple-100 to-yellow-200 text-blue-900 flex flex-col p-4 space-y-4">
+    <div className="flex overflow-y-auto w-1/5 bg-gradient-to-tr from-cyan-200 via-purple-100 to-yellow-200 flex flex-col p-4 space-y-4">
       {/* Search Bar */}
       <div className="flex items-center gap-4 w-full">
         <div className="relative flex-1">
@@ -87,7 +87,7 @@ export default function Sidebar({ servers, openCreateServer, setSelectedServer})
       {/* Server List */}
       <div className="flex-3 overflow-y-auto">
         {filteredServers.length > 0 ? (
-          <ul className="flex flex-col items-center space-y-4 mb-4">
+          <ul className="flex flex-col items-center space-y-4 mb-4 mt-2">
             {filteredServers.map((server) => (
               <li 
               key={server.id} 
@@ -101,7 +101,8 @@ export default function Sidebar({ servers, openCreateServer, setSelectedServer})
                   className="w-54 h-16 transition-transform duration-200 group-hover:scale-110"
                 />
                 {/* Server name overlay */}
-                <span className="absolute top-1/2 left-1/2 w-full text-center transform -translate-x-1/2 -translate-y-1/2 text-lg font-semibold text-violet-800 pointer-events-none">
+                <span className={`absolute top-1/2 left-1/2 w-full text-center transform -translate-x-1/2 -translate-y-1/2 text-xl text-violet-800 pointer-events-none ${selectedServer?.id === server.id ? 'underline' : ''}`}>
+                  
                   {server.name}
                 </span>
               </li>
