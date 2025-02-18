@@ -74,7 +74,7 @@ export default function AddUser({ open, setOpen, serverId, userList, serverUsers
 
   return (
     <Transition show={open} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={() => setOpen(false)}>
+      <Dialog as="div" className="relative z-30" onClose={() => setOpen(false)}>
         {/* Backdrop */}
         <Transition.Child
           as={Fragment}
@@ -113,7 +113,7 @@ export default function AddUser({ open, setOpen, serverId, userList, serverUsers
 
                 {/* Form Section */}
                 <div className="px-6 py-6">
-                  <h3 className="text-base font-semibold text-gray-900">
+                  <h3 className="text-lg font-medium text-gray-900">
                     Add User to Server
                   </h3>
                   <p className="mt-1 text-sm text-gray-900">
@@ -128,7 +128,7 @@ export default function AddUser({ open, setOpen, serverId, userList, serverUsers
 
                         {/* User Dropdown */}
                         <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                        <dt className="text-sm font-medium text-gray-900">
+                        <dt className="text-sm text-gray-900">
                             Select User
                         </dt>
                         <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
@@ -156,7 +156,7 @@ export default function AddUser({ open, setOpen, serverId, userList, serverUsers
 
                       {/* Role Dropdown */}
                       <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                        <dt className="text-sm font-medium text-gray-900">
+                        <dt className="text-sm text-gray-900">
                           Select Role
                         </dt>
                         <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
@@ -180,7 +180,7 @@ export default function AddUser({ open, setOpen, serverId, userList, serverUsers
                       <button
                         type="button"
                         onClick={() => setOpen(false)}
-                        className="text-sm font-semibold text-gray-900"
+                        className="text-sm font-medium text-gray-900"
                       >
                         Cancel
                       </button>
@@ -188,7 +188,7 @@ export default function AddUser({ open, setOpen, serverId, userList, serverUsers
                       {/* Submit Button */}
                       <button
                         type="submit"
-                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
                       >
                         Add User
                       </button>

@@ -35,6 +35,7 @@
     "react-dom": "^18.3.1",
     "react-gtm-module": "^2.0.11",
     "react-i18next": "^15.2.0",
+    "react-p5": "^1.4.1",
     "react-router-dom": "^6.2.1",
     "react-router-hash-link": "^2.4.3",
     "react-scripts": "^5.0.1",

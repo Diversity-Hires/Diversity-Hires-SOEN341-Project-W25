@@ -210,6 +210,7 @@ function Home() {
         servers={userServers} 
         setSelectedServer={setSelectedServer}
         openCreateServer={handleCreateServer}
+        selectedServer={selectedServer}
         className="w-64 min-w-32 flex-shrink-0" 
         />
 
