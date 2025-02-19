@@ -88,7 +88,7 @@ function Login() {
         <div className="mt-8 w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-xl">
           <form id="loginForm" onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-base/6 font-bold text-stone-400">
+              <label htmlFor="username" className="block text-base/6 font-medium text-stone-400">
                 Username
               </label>
               <div className="mt-2">
@@ -98,7 +98,7 @@ function Login() {
                   type="text"
                   required
                   autoComplete="username"
-                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-purple-600 sm:text-sm/6"
+                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-indigo-800 outline outline-1 -outline-offset-1 outline-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-purple-600 sm:text-sm/6"
                   value={username} 
                   onChange={(e) => setUsername(e.target.value)}
                 />
@@ -107,11 +107,11 @@ function Login() {
 
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-base/6 font-bold text-stone-400">
+                <label htmlFor="password" className="block text-base/6 font-medium text-stone-400">
                   Password
                 </label>
                 <div className="text-sm" onClick={forgotPassword}>
-                  <a href="#" className="font-base text-stone-400 text-base hover:text-gray-500">
+                  <a href="#" className="text-stone-400 text-base hover:text-gray-500">
                     Forgot password?
                   </a>
                 </div>
@@ -123,7 +123,7 @@ function Login() {
                   type="password"
                   required
                   autoComplete="current-password"
-                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-purple-600 sm:text-sm/6"
+                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-indigo-800 outline outline-1 -outline-offset-1 outline-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-purple-600 sm:text-sm/6"
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
                 />
@@ -134,13 +134,13 @@ function Login() {
             <div className="flex flex-col items-center w-full space-y-6 mt-2">
             <button
               type="submit"
-              className="w-2/4 justify-center rounded-md bg-purple-400 px-4 py-2 text-base font-semibold text-white shadow-md hover:bg-pink-500 focus-visible:outline focus-visible:ring-2 focus-visible:ring-pink-500"
+              className="w-2/4 justify-center rounded-md bg-purple-400 px-4 py-2 text-base font-medium text-white shadow-md hover:bg-pink-500 focus-visible:outline focus-visible:ring-2 focus-visible:ring-pink-500"
             >
             Log in
             </button>
             <button
               type="button"
-              className="w-1/4 justify-center rounded-md bg-blue-400 px-4 py-2 text-base font-semibold text-white shadow-md hover:bg-blue-500 focus-visible:outline focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="w-1/4 justify-center rounded-md bg-blue-400 px-4 py-2 text-base font-medium text-white shadow-md hover:bg-blue-500 focus-visible:outline focus-visible:ring-2 focus-visible:ring-blue-500"
               onClick={() => handleRegistration()} //open registration pop-up
               >
             Register

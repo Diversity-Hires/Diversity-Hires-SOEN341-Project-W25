@@ -10,7 +10,7 @@ const Particles = () => {
       let particles = [];
       let maxParticles = 50;
       // Distance around the mouse in which bubbles repel
-      let repelDistance = 400;
+      let repelDistance = 350;
 
       class Particle {
         constructor(x, y) {
@@ -33,10 +33,25 @@ const Particles = () => {
           if (distance < repelDistance) {
             let angle = p.atan2(dy, dx);
             // Force grows as the bubble is closer to the mouse
-            let force = (repelDistance - distance) / repelDistance * 0.15;
+            let force = (repelDistance - distance) / repelDistance * 0.2;
             // Push the bubble away from the mouse
             this.speedX -= force * p.cos(angle);
             this.speedY -= force * p.sin(angle);
+          }
+
+          // Apply a friction-like drag
+          let drag = 0.995;
+          this.speedX *= drag;
+          this.speedY *= drag;
+
+          // Ensure a minimum speed so the particles don't come to a stop
+          let minSpeed = 0.9;
+          let currentSpeed = p.sqrt(this.speedX * this.speedX + this.speedY * this.speedY);
+          if (currentSpeed < minSpeed) {
+            // Keep direction but set to minSpeed
+            let angle = p.atan2(this.speedY, this.speedX);
+            this.speedX = minSpeed * p.cos(angle);
+            this.speedY = minSpeed * p.sin(angle);
           }
 
           // Keep particles inside the canvas boundaries
@@ -91,3 +106,4 @@ const Particles = () => {
 };
 
 export default Particles;
+
