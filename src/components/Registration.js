@@ -115,7 +115,7 @@ export default function Registration({ open, setOpen, user, pass }) {
                                 {/* Form Section */}
                                 <div className="px-6 py-6">
                                     <div className="px-4 sm:px-0">
-                                        <h3 className="text-base/7 font-semibold text-gray-900">Register</h3>
+                                        <h3 className="text-lg/7 font-medium text-gray-900">Register</h3>
                                         <p className="mt-1 max-w-2xl text-sm/6 text-gray-900">Enter your information</p>
                                     </div>
 
@@ -123,7 +123,7 @@ export default function Registration({ open, setOpen, user, pass }) {
                                         <dl className="divide-y divide-gray-100">
                                             {/* Username Field */}
                                             <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                                                <dt className="text-sm/6 font-medium text-gray-900">Username</dt>
+                                                <dt className="text-sm/6 text-gray-900">Username</dt>
                                                 <dd className="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
                                                     <input
                                                         id="username"
@@ -139,7 +139,7 @@ export default function Registration({ open, setOpen, user, pass }) {
 
                                             {/* Password Field */}
                                             <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                                                <dt className="text-sm/6 font-medium text-gray-900">Password</dt>
+                                                <dt className="text-sm/6 text-gray-900">Password</dt>
                                                 <dd className="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
                                                     <input
                                                         id="password"
@@ -160,7 +160,7 @@ export default function Registration({ open, setOpen, user, pass }) {
                                                 type="button" 
                                                 id="cancelBtn"
                                                 onClick={() => setOpen(false)}
-                                                className="text-sm/6 font-semibold text-gray-900"
+                                                className="text-sm/6 font-medium text-gray-900"
                                             >
                                                 Cancel
                                             </button>
@@ -168,7 +168,7 @@ export default function Registration({ open, setOpen, user, pass }) {
                                             <button
                                                 type="submit"
                                                 id="saveBtn"
-                                                className="rounded-md bg-accentBlue px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                                                className="rounded-md bg-accentBlue px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                                             >
                                                 Register
                                             </button>
