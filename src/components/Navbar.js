@@ -4,6 +4,7 @@ import Logo from '../images/Logo.png';
 
 
 const navigation = [
+     { name: 'Direct Message', href: '#', current: true },
 //   { name: 'Dashboard', href: '#', current: true },
 //   { name: 'Team', href: '#', current: false },
 //   { name: 'Projects', href: '#', current: false },
