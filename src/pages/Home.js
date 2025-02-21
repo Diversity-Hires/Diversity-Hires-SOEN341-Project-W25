@@ -21,6 +21,7 @@ function Home() {
   const [userServers, setUserServers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [userList, setUserList] = useState([]);
+  const [selectedMessages, setSelectedMessages] = useState([]);
   const [selectedServerUsers, setSelectedServerUsers] = useState(null);
   const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
   const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
