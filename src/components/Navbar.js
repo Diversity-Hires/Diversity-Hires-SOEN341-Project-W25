@@ -7,6 +7,7 @@ import GcIcon from '../images/GcIcon.png';
 
 
 const navigation = [
+
     { name: 'Servers', href: '#', current: true, icon: GcIcon}, // use GcIcon import
     { name: 'DM', href: '#', current: false, icon: DmIcon}, //use DmIcon import
    
