@@ -1,15 +1,16 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
 import Logo from '../images/Logo.png';
+import DmIcon from '../images/DmIcon.png';
+import GcIcon from '../images/GcIcon.png';
+
 
 
 const navigation = [
-     { name: 'Direct Message', href: '#', current: true },
-//   { name: 'Dashboard', href: '#', current: true },
-//   { name: 'Team', href: '#', current: false },
-//   { name: 'Projects', href: '#', current: false },
-//   { name: 'Calendar', href: '#', current: false },
-//   { name: 'Reports', href: '#', current: false },
+
+    { name: 'Servers', href: '#', current: true, icon: GcIcon}, // use GcIcon import
+    { name: 'DM', href: '#', current: false, icon: DmIcon}, //use DmIcon import
+   
 ]
 
 const logout = () => {
@@ -45,24 +46,32 @@ export default function Navbar({user}) {
                         <div className="flex items-center">
                             <div className="shrink-0">
                                 <img
-                                    alt="Your Company"
+                                    alt="ChatHaven Logo"
                                     src={Logo}
                                     className="h-12 md:h-14 lg:h-16 xl:h-20 mr-2 ml-3"
                                 />
                             </div>
                             <div className="hidden md:block">
-                            <div className="ml-10 flex items-baseline space-x-4">
+                            <div className="ml-10 flex items-baseline space-x-2">
                                 {navigation.map((item) => (
                                 <a
                                     key={item.name}
                                     href={item.href}
                                     aria-current={item.current ? 'page' : undefined}
                                     className={classNames(
-                                    item.current ? 'bg-violet-800 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                                    'rounded-md px-3 py-2 text-sm',
+                                    item.current ? 'bg-blue-200 text-violet-700' : 'text-violet-700 hover:bg-blue-200 hover:text-white',
+                                    'rounded-md text-sm mx-3 my-2',
                                     )}
                                 >
+                                <div className="flex justify-center items-center gap-1 mx-3 my-2">
                                     {item.name}
+                                    <img
+                                        alt= {`${item.name} Icon`}
+                                        src={item.icon}
+                                        className="h-6"
+                                    />
+                                </div>    
+                                
                                 </a>
                                 ))}
                             </div>
