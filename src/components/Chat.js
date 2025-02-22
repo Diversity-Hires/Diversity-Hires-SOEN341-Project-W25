@@ -28,21 +28,21 @@ export default function Chat({ messages, selectedServer, isAdmin, openAddUser, s
   }, [selectedMessages]);
 
 
-  const deleteMessages = async (event) => {
-    event.preventDefault(); // Prevent default request
+  const deleteMessages = async () => {
     try {
       const res = await axios.delete(`${API_URL}/servers/messages`, {
-        "serverId": selectedServer,
-        "selectedMessages": selectedMessages
-      }, 
-      {
+        // All config goes here
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'x-api-key': API_KEY // Include the API Key
+          'x-api-key': API_KEY
+        },
+        data: {
+          "serverId": selectedServer.id,
+          "selectedMessages": selectedMessages
         }
-      }); 
-
+      });
+  
       Notiflix.Notify.success('Messages deleted successfully');
     } catch (error) {
       Notiflix.Notify.failure(
@@ -52,20 +52,29 @@ export default function Chat({ messages, selectedServer, isAdmin, openAddUser, s
     }
   };
 
-
   if (!selectedServer) {
     return <div className="flex-1 flex items-center justify-center bg-gradient-to-t from-cyan-200 via-emerald-100 to-teal-50 text-indigo-800 ">Select a server to start chatting</div>;
   }
 
-//   const sendMessage = async () => {
-//     if (!newMessage.trim()) return;
-//     await addDoc(collection(db, `servers/${selectedServer.id}/messages`), {
-//       text: newMessage,
-//       username: 'User1', // Replace with actual username
-//       timestamp: serverTimestamp()
-//     });
-//     setNewMessage('');
-//   };
+  const sendMessage = async () => {
+    try {
+      const response = await axios.post(`${API_URL}/servers/messages`,
+        {
+        text: newMessage,
+        serverId: selectedServer.id,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'x-api-key': API_KEY,
+        },
+      });
+      setNewMessage('');
+      // Optionally show a notification for success
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Optionally show an error notification
+    }
+  };
 
 
 return (
@@ -145,8 +154,10 @@ return (
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
         />
-        <button className="p-2 bg-sky-300 rounded-md hover:bg-sky-400">
-          Send
+        <button 
+          className="p-2 bg-sky-300 rounded-md hover:bg-sky-400"
+          onClick={sendMessage}>
+          Send 
         </button>
       </div>
     </div>

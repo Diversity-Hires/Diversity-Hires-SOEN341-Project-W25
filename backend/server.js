@@ -244,7 +244,6 @@ app.post('/api/new-server', apiKeyMiddleware, authMiddleware, async (req, res) =
 
 
 
-
 // Add a user to a server
 app.post('/api/servers/add-user', apiKeyMiddleware, authMiddleware, async (req, res) => {
   try {
@@ -291,6 +290,135 @@ app.post('/api/servers/add-user', apiKeyMiddleware, authMiddleware, async (req, 
     return res.status(500).json({ message: 'Server error.' });
   }
 });
+
+
+// Send a message to a server
+app.post('/api/servers/messages', apiKeyMiddleware, authMiddleware, async (req, res) => {
+  try {
+    const { text, serverId } = req.body; // text of the message
+
+    // Validate input
+    if (!serverId || !text) {
+      return res.status(400).json({ message: 'Missing serverId or text.' });
+    }
+
+    // Check if the server exists
+    const serverRef = db.ref(`servers/${serverId}`);
+    const serverSnapshot = await serverRef.once('value');
+    if (!serverSnapshot.exists()) {
+      return res.status(404).json({ message: 'Server not found.' });
+    }
+
+    // The current user is stored in req.userId by authMiddleware
+    const username = req.userId;
+
+    // Check if the user is part of the server
+    const userRef = serverRef.child('users').child(username);
+    const userSnapshot = await userRef.once('value');
+    if (!userSnapshot.exists()) {
+      // If the user isn't listed in server's users node, they aren't a member
+      return res.status(403).json({ message: 'You are not a member of this server.' });
+    }
+
+    const timestamp = Date.now(); // or new Date().toISOString()
+
+    // Push a new message under servers/{serverId}/messages
+    const messagesRef = serverRef.child('messages');
+    const newMessageRef = messagesRef.push();
+
+    await newMessageRef.set({
+      text,
+      username,
+      timestamp
+    });
+
+    // Return success along with the new message ID
+    return res.status(201).json({
+      message: 'Message sent successfully!',
+      data: {
+        id: newMessageRef.key,
+        text,
+        username,
+        timestamp
+      }
+    });
+
+  } catch (error) {
+    console.error('Error sending message:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+
+
+// Delete a message from a server (author or admin only)
+app.delete('/api/servers/messages', apiKeyMiddleware, authMiddleware, async (req, res) => {
+  try {
+    const { serverId, selectedMessages } = req.body; 
+    /*
+      Expected req.body:
+      {
+        "serverId": "123", 
+        "selectedMessages": ["-Mabc123", "-Mdef456", ...]
+      }
+    */
+
+    // Validate input
+    if (!serverId || !Array.isArray(selectedMessages) || selectedMessages.length === 0) {
+      return res.status(400).json({ message: 'Missing or invalid serverId or messageIds array.' });
+    }
+
+    // Check if the server exists
+    const serverRef = db.ref(`servers/${serverId}`);
+    const serverSnapshot = await serverRef.once('value');
+    if (!serverSnapshot.exists()) {
+      return res.status(404).json({ message: 'Server not found.' });
+    }
+
+    // Track outcomes
+    const deleted = [];
+    const notFound = [];
+    const errors = [];
+
+    // Loop through each messageId
+    for (const messageId of selectedMessages) {
+      try {
+        // Check if the message exists
+        const messageRef = serverRef.child('messages').child(messageId);
+        const messageSnapshot = await messageRef.once('value');
+        if (!messageSnapshot.exists()) {
+          notFound.push(messageId);
+          continue;
+        }
+
+        // Delete the message
+        await messageRef.remove();
+        deleted.push(messageId);
+
+      } catch (innerErr) {
+        console.error(`Error deleting messageId ${messageId}:`, innerErr);
+        // Capture this error so we can respond with partial results
+        errors.push({ messageId, error: innerErr?.message });
+      }
+    }
+
+    // Summarize the outcome
+    return res.status(200).json({
+      message: 'Batch deletion complete.',
+      results: {
+        deleted,   // array of message IDs successfully deleted
+        notFound,  // array of message IDs that did not exist
+        errors     // array of { messageId, error } for any exceptions
+      }
+    });
+
+  } catch (error) {
+    console.error('Error deleting messages:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+
 
 
 
