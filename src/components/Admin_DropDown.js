@@ -1,29 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 
-export default function Dropdown({ open, setOpen, buttonRef, onActionSelect, messages, onDeleteMessages }) {
+
+export default function Dropdown({ open, setOpen, buttonRef, deleteMessages, selectedMessages, isDeleteMode, handleMessageSelect, handleDeleteModeToggle }) {
   const dropdownRef = useRef(null);
-  const [selectingMessages, setSelectingMessages] = useState(false);
-  const [selectedMessages, setSelectedMessages] = useState([]);
+
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Close dropdown if clicked outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(event.target)
-      ) {
-        setOpen(false);
-        setSelectingMessages(false); // Exit selection mode when closing
-        setSelectedMessages([]); // Clear selections
-      }
-    };
 
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [setOpen, buttonRef]);
+
 
   useEffect(() => {
     if (open && buttonRef.current && dropdownRef.current) {
@@ -33,38 +17,64 @@ export default function Dropdown({ open, setOpen, buttonRef, onActionSelect, mes
     }
   }, [open, buttonRef]);
 
-  const handleActionClick = (action) => {
-    if (action === "deleteMessages") {
-      setSelectingMessages(true); // Enable message selection mode
-    } else {
-      onActionSelect(action);
-      setOpen(false);
+
+
+  const handleActionClick = (input) =>{
+    if(input === "deleteMessages"){
+      handleDeleteModeToggle();
+      //console.log(isDeleteMode)
     }
-  };
+    else if(input === "changeRole"){
+      console.log("Change role")
+    }
+    else{
+      console.log("How did you use this?")
+    }
+  }
 
-  const toggleMessageSelection = (messageId) => {
-    setSelectedMessages((prevSelected) =>
-      prevSelected.includes(messageId)
-        ? prevSelected.filter((id) => id !== messageId)
-        : [...prevSelected, messageId]
-    );
-  };
-
-  const handleDeleteConfirm = () => {
-    onDeleteMessages(selectedMessages); // Call parent function to delete
-    setSelectingMessages(false);
-    setSelectedMessages([]);
+  
+  const handleConfirmDelete = () => {
+    deleteMessages();
     setConfirmDelete(false);
+    handleDeleteModeToggle();
+    setOpen(false)
   };
+
+
+
 
   return (
-    <>
-      {open && (
-        <div
-          ref={dropdownRef}
-          className="bg-white shadow-lg rounded-md w-48 p-3 mt-2"
-          style={{ zIndex: 1000 }}
-        >
+    open && (
+
+      <div
+        ref={dropdownRef}
+        className="bg-white shadow-lg rounded-md w-48 p-3 mt-2 z-40"
+        style={{ zIndex: 1000 }}
+      >
+        <div className="flex justify-end">
+          <button
+            onClick={() => {
+              setOpen(false);
+              handleMessageSelect();
+              if (isDeleteMode) {
+                handleDeleteModeToggle();
+              }
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-6"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {!isDeleteMode ? (
           <div className="flex flex-col space-y-2">
             <button
               onClick={() => handleActionClick("changeRole")}
@@ -73,67 +83,50 @@ export default function Dropdown({ open, setOpen, buttonRef, onActionSelect, mes
               Change Role
             </button>
             <button
-              onClick={() => handleActionClick("deleteMessages")}
+              onClick={() => handleDeleteModeToggle()}
               className="w-full text-left text-sm text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100"
             >
               Delete Messages
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Message selection UI */}
-      {selectingMessages && (
-        <div className="p-4 bg-gray-100 border border-gray-300 rounded-lg mt-2">
-          <h3 className="text-lg font-semibold mb-2">Select messages to delete</h3>
-          <ul className="space-y-2">
-            {messages.map((msg) => (
-              <li
-                key={msg.id}
-                className={`p-2 border rounded-md cursor-pointer ${
-                  selectedMessages.includes(msg.id) ? "bg-red-300" : "bg-white"
-                }`}
-                onClick={() => toggleMessageSelection(msg.id)}
-              >
-                {msg.text}
-              </li>
-            ))}
-          </ul>
-          {selectedMessages.length > 0 && (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md"
-            >
-              Delete {selectedMessages.length} Message(s)
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Delete confirmation modal */}
-      {confirmDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">Are you sure?</h3>
-            <p>Do you want to delete {selectedMessages.length} messages?</p>
-            <div className="flex justify-end space-x-3 mt-4">
+        ) : confirmDelete ? (
+          <div className="p-3">
+            <p className="text-sm">Are you sure you want to delete?</p>
+            <div className="flex justify-between mt-3">
               <button
-                onClick={() => setConfirmDelete(false)}
-                className="px-4 py-2 bg-gray-300 rounded-md"
-              >
-                No
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-red-600 text-white rounded-md"
+                onClick={handleConfirmDelete}
+                className="text-white bg-red-500 px-3 py-1 rounded-md"
               >
                 Yes
               </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="text-gray-700 bg-gray-200 px-3 py-1 rounded-md"
+              >
+                No
+              </button>
             </div>
           </div>
-        </div>
-      )}
-    </>
+        ) : (
+          <div className="p-3">
+            <p className="text-sm">Click messages to select them</p>
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className={`mt-3 w-full py-1 text-white rounded-md ${
+                selectedMessages.length > 0
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
+              disabled={selectedMessages.length === 0}
+            >
+              Delete Selected
+            </button>
+          </div>
+        )}
+      </div>
+
+    )
   );
 }
+
 

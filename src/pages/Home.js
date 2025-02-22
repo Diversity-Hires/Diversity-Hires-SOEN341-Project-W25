@@ -12,6 +12,7 @@ import { getAnalytics } from "firebase/analytics";
 import { getDatabase, ref, get, onValue, off } from 'firebase/database';
 import CreateServerPopUp from '../components/CreateGroup';
 import AddUserPopUp from '../components/Add_user'
+import { waitFor } from '@testing-library/react'
 
 
 
@@ -21,10 +22,11 @@ function Home() {
   const [userServers, setUserServers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [userList, setUserList] = useState([]);
-  const [selectedMessages, setSelectedMessages] = useState([]);
+  const [selectedMessages, setSelectedMessages] = useState([]);//This array keeps track of selected messages to be deleted
   const [selectedServerUsers, setSelectedServerUsers] = useState(null);
   const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
   const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
+  const [isDeleteMode, setIsDeleteMode] = useState(false); //This keeps track of delete mode when admin deletes messages
 
   const token = localStorage.getItem('token');
   const currentUser = jwtDecode(token).id || '';
@@ -33,10 +35,38 @@ function Home() {
     setOpenCreateServerDialog(true);
   };
 
+  const clearSelectedMessages = () => {
+    setOpenCreateServerDialog(true);
+  };
+
+  const handleDeleteModeToggle = () => {
+    setIsDeleteMode((prev) => !prev);
+  }; 
+
   const handleAddUser = () => {
     
     setOpenAddUserDialog(true);
   };
+
+  
+  const handleMessageSelect = (id) => {
+    if(id){
+      setSelectedMessages((prev) => {
+        const newSelection = new Set(prev);
+        if (newSelection.has(id)) {
+          newSelection.delete(id);
+        } else {
+          newSelection.add(id);
+        }
+        return Array.from(newSelection);
+      });
+    }
+    else if (!id) {
+      setSelectedMessages([]);
+    }
+    
+  };
+  
 
   // Configure firebase connection
   const firebaseConfig = {
@@ -54,6 +84,9 @@ function Home() {
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app)
 
+  useEffect(() => {
+    console.log("Toggled!", isDeleteMode);
+  }, [isDeleteMode]);
 
   //Fetch messages when a server is selected
   useEffect(() => {
@@ -221,7 +254,13 @@ function Home() {
             selectedServer={selectedServer}
             openAddUser={handleAddUser}
             isAdmin={isAdmin()}  
+            handleMessageSelect={handleMessageSelect}
+            selectedMessages={selectedMessages}
+            isDeleteMode = {isDeleteMode}
+            handleDeleteModeToggle = {handleDeleteModeToggle}
+
             className="flex-1 overflow-auto"
+            
           />
         </div>
         

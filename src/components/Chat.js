@@ -6,19 +6,50 @@ import p5 from 'p5';
 import { UserPlusIcon, UserMinusIcon, Cog6ToothIcon} from '@heroicons/react/24/outline'
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import Bubbles from '../animations/Bubbles'
+import axios from "axios";
+import Notiflix from "notiflix";
+
+const API_URL = process.env.REACT_APP_API_URL;
+const API_KEY = process.env.REACT_APP_API_KEY;
 
 
-export default function Chat({ messages, selectedServer, isAdmin, openAddUser }) {
+export default function Chat({ messages, selectedServer, isAdmin, openAddUser, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle }) {
   
   const [newMessage, setNewMessage] = useState('');
   const [open, setOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState('');
   const buttonRef = useRef(null); // Reference for the button
 
-  const handleActionSelect = (action) => {
-    setSelectedAction(action);
-    console.log("Selected action:", action);
+  const token = localStorage.getItem('token');
 
+  useEffect(() => {
+    console.log(selectedMessages);
+    //console.log(isDeleteMode)
+  }, [selectedMessages]);
+
+
+  const deleteMessages = async (event) => {
+    event.preventDefault(); // Prevent default request
+    try {
+      const res = await axios.delete(`${API_URL}/servers/messages`, {
+        "serverId": selectedServer,
+        "selectedMessages": selectedMessages
+      }, 
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY // Include the API Key
+        }
+      }); 
+
+      Notiflix.Notify.success('Messages deleted successfully');
+    } catch (error) {
+      Notiflix.Notify.failure(
+        error.response?.data?.message || 'Failed to delete messages.'
+      );
+      console.error('Message deletion error:', error);
+    }
   };
 
 
@@ -69,11 +100,15 @@ return (
             <Cog6ToothIcon className="h-6 w-6 cursor-pointer hover:text-blue-500" />
             </button>
             <Dropdown
-        open={open}
-        setOpen={setOpen}
-        onActionSelect={handleActionSelect}
-        buttonRef={buttonRef}
-        />
+              open={open}
+              setOpen={setOpen}
+              deleteMessages={deleteMessages}
+              isDeleteMode = {isDeleteMode}
+              handleDeleteModeToggle = {handleDeleteModeToggle}
+              buttonRef={buttonRef}
+              selectedMessages = {selectedMessages}
+              handleMessageSelect = {handleMessageSelect}
+              />
         {selectedAction && <p>Selected Action: {selectedAction}</p>}
 
           </div>
@@ -83,7 +118,18 @@ return (
       {/* Messages Display */}
       <div className="flex-1 z-20 overflow-y-auto space-y-2 ">
         {messages.map((msg) => (
-          <div key={msg.id} className="bg-indigo-100 p-2 px-3 rounded-xl max-w-fit">
+          
+          <div 
+            key={msg.id} 
+            onClick={() => {
+
+              if(isDeleteMode){handleMessageSelect(msg.id) }
+            }
+              
+            }
+            className={`p-2 px-3 rounded-xl max-w-fit ${
+              selectedMessages.includes(msg.id) ? "bg-red-200" : "bg-indigo-100"
+            }`}>
             <span className="text-violet-800">{msg.username}: </span> 
             <span className="text-indigo-700">{msg.text}</span>
           </div>
