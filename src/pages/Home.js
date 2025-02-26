@@ -23,7 +23,8 @@ function Home() {
   const [userList, setUserList] = useState([]);
   const [selectedServerUsers, setSelectedServerUsers] = useState(null);
   const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
-  const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
+  const [openAddUserDialog, setOpenAddUserDialog] = useState(false);
+  const [serverMode, setServerMode] = useState(false)  
 
   const token = localStorage.getItem('token');
   const currentUser = jwtDecode(token).id || '';
@@ -31,6 +32,10 @@ function Home() {
   const handleCreateServer = () => {
     setOpenCreateServerDialog(true);
   };
+
+  const handleSetServerMode = () => {
+    setServerMode((prev) => (!prev));
+  }
 
   const handleAddUser = () => {
     
@@ -68,7 +73,11 @@ function Home() {
 
   useEffect(() => {
     if (currentUser) {
-      getServers();
+      if(serverMode === true){
+      getServers();}
+      else{
+      getDMs();
+      }
       getUsers();
     }
   }, [currentUser]);
@@ -132,6 +141,7 @@ function Home() {
           }));
           
           setUserServers(serversArray);
+          console.log(serversArray);
         } else {
           setUserServers([]); // no servers yet
         }
@@ -141,6 +151,109 @@ function Home() {
       });
   }
 
+  function ServerUsersHelper(ServerID){
+
+    const db = getDatabase();
+    const usersRef = ref(db, `servers/${ServerID}/users`);
+
+    return get(usersRef)
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          let userCount = 0;
+          
+          snapshot.forEach(() => {
+              userCount+=1;
+            });
+            return userCount;
+          
+        }else{
+          return 0;
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching users for this server:', error);
+        return 0;
+      });
+
+  }
+
+  function DMServerNameHelper(ServerID) {
+    const db = getDatabase();
+    const usersRef = ref(db, `servers/${ServerID}/users`);
+  
+    return get(usersRef)
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          let firstValidName = null;
+  
+          snapshot.forEach((childSnapshot) => {
+            // Get the username from the key (like "csuciu" or "filip")
+            const username = childSnapshot.key;
+            //console.log("Username is ", username, ", Logged in user is ", currentUser);
+            
+            if (username !== currentUser) {
+              firstValidName = username;
+              return true; // Stop iteration once we find the first valid name
+            }
+          });
+  
+          return firstValidName || ""; // Return first valid name or empty string if none found
+        } else {
+          return ""; // Return empty string if no users are found
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching users for this server:', error);
+        return "";
+      });
+  }
+
+
+
+  function getDMs() {
+    const db = getDatabase();
+    const serversRef = ref(db, `users/${currentUser}/servers`);
+  
+    get(serversRef)
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const serverKeys = Object.keys(data);
+          const promises = [];
+  
+          // Create an array of promises
+          serverKeys.forEach((key) => {
+            const promise = ServerUsersHelper(key)
+              .then(memberCount => {
+                if (memberCount === 2) {
+                  return DMServerNameHelper(key)
+                    .then(tempname => {
+                      return { id: key, name: tempname || '' };
+                    });
+                }
+                return null;
+              });
+            promises.push(promise);
+          });
+  
+          // Wait for all promises to resolve
+          Promise.all(promises)
+            .then(results => {
+              // Filter out null values (servers that don't meet the memberCount === 2 condition)
+              const DMArray2 = results.filter(item => item !== null);
+              setUserServers(DMArray2);
+              console.log(DMArray2);
+            });
+        } else {
+          setUserServers([]);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching servers:', error);
+        setUserServers([]);
+      });
+  }
+  
 
   // Function to get the list of all users
   function getUsers() {
