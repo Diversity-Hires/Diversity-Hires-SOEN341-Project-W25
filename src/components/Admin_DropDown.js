@@ -12,8 +12,13 @@ export default function Dropdown({ open, setOpen, buttonRef, deleteMessages, sel
   useEffect(() => {
     if (open && buttonRef.current && dropdownRef.current) {
       const buttonRect = buttonRef.current.getBoundingClientRect();
-      dropdownRef.current.style.top = `${buttonRect.bottom + window.scrollY + 5}px`;
-      dropdownRef.current.style.left = `${buttonRect.left + window.scrollX}px`;
+      // Make the dropdown absolutely positioned
+      dropdownRef.current.style.position = 'absolute';
+      // Give it a high z-index
+      // Position it just below the button
+      // dropdownRef.current.style.top = `${buttonRect.bottom + window.scrollY + 5}px`;
+      // dropdownRef.current.style.left = `${buttonRect.left + window.scrollX}px`;
+    
     }
   }, [open, buttonRef]);
 
@@ -47,9 +52,9 @@ export default function Dropdown({ open, setOpen, buttonRef, deleteMessages, sel
     open && (
 
       <div
-        ref={dropdownRef}
-        className="bg-white shadow-lg rounded-md w-48 p-3 mt-2 z-40"
-        style={{ zIndex: 1000 }}
+        //ref={dropdownRef}
+        className="absolute bg-white shadow-lg rounded-md w-48 p-3 mt-40 z-40"
+        //style={{ zIndex: 1000 }}
       >
         <div className="flex justify-end">
           <button
