@@ -125,7 +125,7 @@ return (
       </div>
 
       {/* Messages Display */}
-      <div className="flex-1 z-20 overflow-y-auto space-y-2 ">
+      <div className="flex-1 z-10 overflow-y-auto space-y-2 ">
         {messages.map((msg) => (
           
           <div 
@@ -146,20 +146,28 @@ return (
       </div>
 
       {/* Message Input */}
-      <div className="mt-4 z-20 flex items-center space-x-2">
-        <input
-          type="text"
-          className="flex-1 p-2 bg-teal-50 rounded-md"
-          placeholder="Type a message..."
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-        />
-        <button 
-          className="p-2 bg-sky-300 rounded-md hover:bg-sky-400"
-          onClick={sendMessage}>
-          Send 
-        </button>
-      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault(); // Prevents the default browser refresh on submit
+          sendMessage();
+        }}
+      >
+        <div className="relative mt-4 z-20 flex items-center space-x-2" >
+          <input
+            type="text"
+            className="flex-1 p-2 bg-teal-50 rounded-md"
+            placeholder="Type a message..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+          />
+          <button 
+            type="submit"
+            className="p-2 bg-sky-300 rounded-md hover:bg-sky-400"
+            >
+            Send 
+          </button>
+        </div>
+      </form>
     </div>
   );
 
