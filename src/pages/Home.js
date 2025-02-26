@@ -27,6 +27,7 @@ function Home() {
   const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
   const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
   const [isDeleteMode, setIsDeleteMode] = useState(false); //This keeps track of delete mode when admin deletes messages
+  const [serverMode, setServerMode] = useState(true);
 
   const token = localStorage.getItem('token');
   const currentUser = jwtDecode(token).id || '';
