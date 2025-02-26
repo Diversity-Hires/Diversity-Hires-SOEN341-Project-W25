@@ -6,7 +6,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import Notiflix from "notiflix";
 
 
-// Assume you have your API_URL and API_KEY somewhere (env or config)
+// Get API info
 const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
