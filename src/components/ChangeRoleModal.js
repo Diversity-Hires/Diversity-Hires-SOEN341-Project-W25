@@ -2,36 +2,43 @@ import React, { useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
 import axios from "axios";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import Notiflix from "notiflix"; // Used for notifications
 
-// Use fallback API URL if .env is missing
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-const API_KEY = process.env.REACT_APP_API_KEY || "default-api-key"; 
+// Assume you have your API_URL and API_KEY somewhere (env or config)
+const API_URL = process.env.REACT_APP_API_URL;
+const API_KEY = process.env.REACT_APP_API_KEY;
 
-export default function ChangeRoleModal({ open, setOpen, user, serverId, updateUserRole }) {
-  // Ensure selected role updates when user changes
-  const [selectedRole, setSelectedRole] = useState(user?.role || "member");
+export default function ChangeRoleModal({ open, setOpen, serverId, serverUsers, getUpdatedRoles }) {
+  const [groupData, setGroupData] = useState({
+    username: '',
+    role: '',
+  });
 
-  useEffect(() => {
-    if (user) {
-      setSelectedRole(user.role || "member");
-    }
-  }, [user]);
+  const token = localStorage.getItem('token'); 
 
-  // Get authentication token
-  const token = localStorage.getItem('token');
+ 
+  // 1. Handle text/textarea changes
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setGroupData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
 
-  // Handle role change request
+
+
+  //Change user role on form submit
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     try {
-      await axios.patch(
-        `${API_URL}/servers/update-role`,
+      await axios.post(
+        `${API_URL}/servers/add-user`,
         {
-          serverId,
-          userId: user.id,
-          newRole: selectedRole,
+          serverId: serverId,
+          username: groupData.username,
+          role: groupData.role,
         },
         {
           headers: {
@@ -42,24 +49,24 @@ export default function ChangeRoleModal({ open, setOpen, user, serverId, updateU
         }
       );
 
-      // Show success notification
-      Notiflix.Notify.success(`Role updated to ${selectedRole}!`);
-
-      // Update role in frontend state
-      updateUserRole(user.id, selectedRole);
-
-      // Close modal after successful update
+      Notiflix.Notify.success('User role changed successfully!');
+      setGroupData({ username: '', role: ''});
+      getUpdatedRoles();
       setOpen(false);
     } catch (error) {
-      Notiflix.Notify.failure(error.response?.data?.message || "Failed to update role.");
-      console.error("Role update error:", error);
+      Notiflix.Notify.failure(
+        error.response?.data?.message || 'Failed to add user.'
+      );
+      console.error('User addition error:', error);
     }
   };
+
+
 
   return (
     <Transition show={open} as={Fragment}>
       <Dialog as="div" className="relative z-30" onClose={() => setOpen(false)}>
-        {/* Modal Background */}
+        {/* Backdrop */}
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -74,7 +81,7 @@ export default function ChangeRoleModal({ open, setOpen, user, serverId, updateU
 
         {/* Modal Panel */}
         <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
+          <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -84,27 +91,97 @@ export default function ChangeRoleModal({ open, setOpen, user, serverId, updateU
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                {/* Close Button X */}
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
+                >
+                  <span className="sr-only">Close</span>
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+
+                {/* Form Section */}
                 <div className="px-6 py-6">
-                  <h3 className="text-lg font-medium text-gray-900">Change User Role</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Change User Role
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-900">
+                    Please select a user and chose their new role.
+                  </p>
 
-                  <form onSubmit={handleSubmit} className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">Select New Role:</label>
-                    <select
-                      className="w-full mt-2 p-2 border rounded-md"
-                      value={selectedRole}
-                      onChange={(e) => setSelectedRole(e.target.value)}
-                    >
-                      <option value="member">Member</option>
-                      <option value="admin">Admin</option>
-                    </select>
+                  <form
+                    onSubmit={handleSubmit}
+                    className="mt-6 border-t border-gray-100"
+                  >
+                    <dl className="divide-y divide-gray-100">
 
-                    <div className="mt-4 flex justify-end">
-                      <button type="button" onClick={() => setOpen(false)} className="mr-2 text-gray-700">
+                        {/* User Dropdown */}
+                        <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                        <dt className="text-sm text-gray-900">
+                            Select User
+                        </dt>
+                        <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
+                            <select
+                            id="username"
+                            name="username"
+                            value={groupData.username}
+                            onChange={handleInputChange}
+                            className="w-full rounded-md px-3 py-1.5 bg-gray-50 outline outline-1 outline-gray-300 focus:outline-indigo-600"
+                            >
+                            {/* Dummy default option */}
+                            <option value="" disabled>
+                                -- Select a user --
+                            </option>
+
+                            {/* Actual user options */}
+                            {(serverUsers||[]).map((user, index) => (
+                                <option key={index} value={user.username}>
+                                  {`${user.username} (${user.role})`}
+                                </option>
+                            ))}
+                            </select>
+                        </dd>
+                        </div>
+
+                      {/* Role Dropdown */}
+                      <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                        <dt className="text-sm text-gray-900">
+                          Select New Role
+                        </dt>
+                        <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
+                          <select
+                            id="role"
+                            name="role"
+                            value={groupData.role}
+                            onChange={handleInputChange}
+                            className="w-full rounded-md px-3 py-1.5 bg-gray-50 outline outline-1 outline-gray-300 focus:outline-indigo-600"
+                          >
+                            <option value="member">Member</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </dd>
+                      </div>
+                    </dl>
+
+                    {/* Buttons */}
+                    <div className="mt-6 flex items-center justify-end px-3 py-3 gap-x-6">
+                      {/* Cancel Button */}
+                      <button
+                        type="button"
+                        onClick={() => setOpen(false)}
+                        className="text-sm font-medium text-gray-900"
+                      >
                         Cancel
                       </button>
-                      <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md">
-                        Save Changes
+
+                      {/* Submit Button */}
+                      <button
+                        type="submit"
+                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+                      >
+                        Change Role
                       </button>
                     </div>
                   </form>
