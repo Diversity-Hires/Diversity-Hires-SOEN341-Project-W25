@@ -3,7 +3,6 @@ import './App.css'
 import Sidebar from '../components/Sidebar.js'
 import Chat from '../components/Chat.js'
 //import Details from '../components/details/Details.jsx'
-import Navbar from '../components/Navbar.js'
 import {jwtDecode} from 'jwt-decode';
 import { waitFor } from '@testing-library/react'
 
@@ -13,6 +12,7 @@ import { getAnalytics } from "firebase/analytics";
 import { getDatabase, ref, get, onValue, off } from 'firebase/database';
 
 //import components
+import Navbar from '../components/Navbar.js'
 import CreateServerPopUp from '../components/CreateGroup';
 import AddUserPopUp from '../components/Add_user';
 import ChangeRoleModal from '../components/ChangeRoleModal.js'
@@ -57,6 +57,10 @@ function Home() {
     setOpenChangeRoleDialog(true);
   };
 
+  const handleServerModeToggle = () => {
+    setServerMode((prev) => !prev);
+  }; 
+
   
   const handleMessageSelect = (id) => {
     if(id){
@@ -93,9 +97,6 @@ function Home() {
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app)
 
-  useEffect(() => {
-    console.log("Toggled!", isDeleteMode);
-  }, [isDeleteMode]);
 
   //Fetch messages when a server is selected
   useEffect(() => {
@@ -111,6 +112,7 @@ function Home() {
 
   useEffect(() => {
     if (currentUser) {
+      //console.log("Server mode: ", serverMode);
       if(serverMode === true){
       getServers();}
       else{
@@ -118,9 +120,9 @@ function Home() {
       }
       getUsers();
     }
-  }, [currentUser]);
+  }, [currentUser, serverMode]);
 
-  
+
 
   function isAdmin(user) {
     // If we haven't loaded the server users yet, or currentUser doesn't exist, default to false
@@ -180,7 +182,7 @@ function Home() {
           }));
           
           setUserServers(serversArray);
-          console.log(serversArray);
+          //console.log(serversArray);
         } else {
           setUserServers([]); // no servers yet
         }
@@ -215,6 +217,7 @@ function Home() {
       });
 
   }
+
 
   function DMServerNameHelper(ServerID) {
     const db = getDatabase();
@@ -281,7 +284,7 @@ function Home() {
               // Filter out null values (servers that don't meet the memberCount === 2 condition)
               const DMArray2 = results.filter(item => item !== null);
               setUserServers(DMArray2);
-              console.log(DMArray2);
+              //console.log(DMArray2);
             });
         } else {
           setUserServers([]);
@@ -356,6 +359,8 @@ function Home() {
     <div className="flex flex-col min-h-screen">
       <Navbar 
       user = {currentUser}
+      serverMode = {serverMode}
+      toggleServerMode = {handleServerModeToggle}
       />
 
       <div className="flex flex-1 overflow-hidden">
