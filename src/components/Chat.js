@@ -126,26 +126,48 @@ return (
         )}
       </div>
 
+ 
       {/* Messages Display */}
-      <div className="flex-1 z-10 overflow-y-auto space-y-2 ">
-        {messages.map((msg) => (
-          
-          <div 
-            key={msg.id} 
-            onClick={() => {
+      <div className="flex-1 z-10 overflow-y-auto space-y-2">
+        {messages.map((msg) => {
+          // Format the timestamp using JS Date
+          const dateObj = new Date(msg.timestamp);
+          const hours = String(dateObj.getHours()).padStart(2, '0');
+          const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+          const day = String(dateObj.getDate()).padStart(2, '0');
+          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const year = String(dateObj.getFullYear()).slice(-2);
+          const formattedTimestamp = `${hours}:${minutes} ${day}/${month}/${year}`;
 
-              if(isDeleteMode){handleMessageSelect(msg.id) }
-            }
-              
-            }
-            className={`p-2 px-3 rounded-xl max-w-fit ${
-              selectedMessages.includes(msg.id) ? "bg-red-200" : "bg-indigo-100"
-            }`}>
-            <span className="text-violet-800">{msg.username}: </span> 
-            <span className="text-indigo-700">{msg.text}</span>
-          </div>
-        ))}
+          return (
+            <div
+              key={msg.id}
+              onClick={() => {
+                if (isDeleteMode) {
+                  handleMessageSelect(msg.id);
+                }
+              }}
+              className={`p-2 px-3 rounded-xl max-w-fit ${
+                selectedMessages.includes(msg.id) ? "bg-red-200" : "bg-indigo-100"
+              }`}
+            >
+              {/* Username and message inline */}
+              <div>
+                <span className="text-violet-800 font-semibold">{msg.username}</span>
+                <span className="ml-2 text-indigo-700">{msg.text}</span>
+              </div>
+
+              {/* Timestamp below */}
+              <div className="text-xs text-gray-500">
+                {formattedTimestamp}
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+
+
 
       {/* Message Input */}
       <form

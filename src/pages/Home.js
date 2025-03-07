@@ -162,6 +162,7 @@ function Home() {
         const loadedMessages = Object.entries(data).map(([key, msg]) => ({
           id: key,
           ...msg,
+          
         }));
         // Sort by timestamp ascending if you want chronological order
         loadedMessages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
@@ -170,6 +171,7 @@ function Home() {
         setMessages([]);
       }
     });
+    console.log(messages);
   }
 
 
