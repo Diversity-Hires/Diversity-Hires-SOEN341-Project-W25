@@ -5,14 +5,18 @@ import Chat from '../components/Chat.js'
 //import Details from '../components/details/Details.jsx'
 import Navbar from '../components/Navbar.js'
 import {jwtDecode} from 'jwt-decode';
+import { waitFor } from '@testing-library/react'
 
 // imports for front-end access to Firebase DB
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getDatabase, ref, get, onValue, off } from 'firebase/database';
+
+//import components
 import CreateServerPopUp from '../components/CreateGroup';
-import AddUserPopUp from '../components/Add_user'
-import { waitFor } from '@testing-library/react'
+import AddUserPopUp from '../components/Add_user';
+import ChangeRoleModal from '../components/ChangeRoleModal.js'
+
 
 
 
@@ -26,6 +30,7 @@ function Home() {
   const [selectedServerUsers, setSelectedServerUsers] = useState(null);
   const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
   const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
+  const [openChangeRoleDialog, setOpenChangeRoleDialog] = useState(false);  
   const [isDeleteMode, setIsDeleteMode] = useState(false); //This keeps track of delete mode when admin deletes messages
   const [serverMode, setServerMode] = useState(true);
 
@@ -45,8 +50,11 @@ function Home() {
   }; 
 
   const handleAddUser = () => {
-    
     setOpenAddUserDialog(true);
+  };
+
+  const handleChangeRole = () => {
+    setOpenChangeRoleDialog(true);
   };
 
   
@@ -112,14 +120,15 @@ function Home() {
     }
   }, [currentUser]);
 
+  
 
-  function isAdmin() {
+  function isAdmin(user) {
     // If we haven't loaded the server users yet, or currentUser doesn't exist, default to false
-    if (!selectedServerUsers || !currentUser) return false;
+    if (!selectedServerUsers || !user) return false;
   
     // Try to find the currentUser in selectedServerUsers
     const found = selectedServerUsers.find(
-      (u) => u.username === currentUser
+      (u) => u.username === user
     );
   
     // Return true if found user's role is 'admin'
@@ -311,6 +320,8 @@ function Home() {
       });
   }
 
+
+
   // Function to get the list of the members and admins of current selected server
   function getServerUsers() {
     const db = getDatabase();
@@ -362,7 +373,8 @@ function Home() {
             messages={messages}
             selectedServer={selectedServer}
             openAddUser={handleAddUser}
-            isAdmin={isAdmin()}  
+            openChangeRole={handleChangeRole}
+            isAdmin={isAdmin(currentUser)}  
             handleMessageSelect={handleMessageSelect}
             selectedMessages={selectedMessages}
             isDeleteMode = {isDeleteMode}
@@ -390,6 +402,15 @@ function Home() {
               userList = {userList}
               serverUsers = {selectedServerUsers}
             />
+
+      <ChangeRoleModal
+              open={openChangeRoleDialog}
+              setOpen = {setOpenChangeRoleDialog}
+              serverId={selectedServer?.id || ""}
+              serverUsers = {selectedServerUsers}
+              getUpdatedRoles = {getServerUsers}
+            />
+
     </div>
   );
 

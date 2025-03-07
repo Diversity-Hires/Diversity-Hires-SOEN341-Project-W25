@@ -13,7 +13,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
 
-export default function Chat({ messages, selectedServer, isAdmin, openAddUser, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle }) {
+export default function Chat({ messages, selectedServer, isAdmin, openAddUser, openChangeRole, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle, getUpdatedRoles }) {
   
   const [newMessage, setNewMessage] = useState('');
   const [open, setOpen] = useState(false);
@@ -117,6 +117,8 @@ return (
               buttonRef={buttonRef}
               selectedMessages = {selectedMessages}
               handleMessageSelect = {handleMessageSelect}
+              openChangeRole={openChangeRole}
+              getUpdatedRoles={getUpdatedRoles}
               />
         {selectedAction && <p>Selected Action: {selectedAction}</p>}
 
