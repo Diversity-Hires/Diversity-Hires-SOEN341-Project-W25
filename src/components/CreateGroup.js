@@ -10,7 +10,7 @@ import Notiflix from "notiflix";
 const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
-export default function CreateGroup({ open, setOpen, userList, currentUser }) {
+export default function CreateGroup({ open, setOpen, userList, currentUser, refresh }) {
   const [groupData, setGroupData] = useState({
     name: '',
     description: '',
@@ -71,6 +71,7 @@ export default function CreateGroup({ open, setOpen, userList, currentUser }) {
 
       Notiflix.Notify.success('Server created successfully!');
       setGroupData({ name: '', description: '', members: [] });
+      refresh();
       setOpen(false);
     } catch (error) {
       Notiflix.Notify.failure(

@@ -61,6 +61,14 @@ function Home() {
     setServerMode((prev) => !prev);
   }; 
 
+  const refreshServersAndDMs = () => {
+      if(serverMode === true){
+      getServers();}
+      else{
+      getDMs();
+      }
+    };
+
   
   const handleMessageSelect = (id) => {
     if(id){
@@ -154,6 +162,7 @@ function Home() {
         const loadedMessages = Object.entries(data).map(([key, msg]) => ({
           id: key,
           ...msg,
+          
         }));
         // Sort by timestamp ascending if you want chronological order
         loadedMessages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
@@ -162,35 +171,62 @@ function Home() {
         setMessages([]);
       }
     });
+    console.log(messages);
   }
 
 
 // Function to get the list of servers for the user
-  function getServers() {
-    const db = getDatabase();
-    const serversRef = ref(db, `users/${currentUser}/servers`);
-  
-    get(serversRef)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val(); // e.g., { 165: "Server Name A", 456: "Server Name B" }
-          
-          // Convert to array of { id, name } objects
-          const serversArray = Object.entries(data).map(([id, name]) => ({ 
-            id, 
-            name 
-          }));
-          
-          setUserServers(serversArray);
-          //console.log(serversArray);
-        } else {
-          setUserServers([]); // no servers yet
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching servers:', error);
+function getServers() {
+  const db = getDatabase();
+  const serversRef = ref(db, `users/${currentUser}/servers`);
+
+  get(serversRef)
+    .then((snapshot) => {
+      if (!snapshot.exists()) {
+        setUserServers([]);
+        return;
+      }
+
+      const data = snapshot.val(); // e.g., { "165": "Server Name A", "456": "Server Name B" }
+      const serverKeys = Object.keys(data);
+
+      // Build an array of promises: each promise checks the member count
+      const promises = serverKeys.map((serverID) => {
+        return ServerUsersHelper(serverID)
+          .then((memberCount) => {
+            // If this server has 3 or more members, return its data
+            if (memberCount >= 3) {
+              return {
+                id: serverID,
+                name: data[serverID],
+              };
+            } else {
+              // Return null if it doesn't match the member criteria
+              return null;
+            }
+          });
       });
-  }
+
+      // Wait for all membership lookups
+      Promise.all(promises)
+        .then((results) => {
+          // Filter out null entries
+          const filteredServers = results.filter((server) => server !== null);
+          setUserServers(filteredServers);
+        })
+        .catch((error) => {
+          console.error('Error filtering servers by member count:', error);
+          setUserServers([]);
+        });
+    })
+    .catch((error) => {
+      console.error('Error fetching servers:', error);
+      setUserServers([]);
+    });
+}
+
+
+
 
   function ServerUsersHelper(ServerID){
 
@@ -398,6 +434,7 @@ function Home() {
               setOpen = {setOpenCreateServerDialog}
               currentUser={currentUser}
               userList = {userList}
+              refresh = {refreshServersAndDMs}
             />
       
       <AddUserPopUp
