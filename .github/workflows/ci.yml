@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Check out the code
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      # 2) Use a specific Node.js version (adjust if needed)
+      - name: Use Node.js 22.13.1
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.13.1
+
+      # 3) Back-end install and tests
+      - name: Install & Test Backend
+        run: |
+          cd backend
+          npm install
+          npm test
+
+      # 4) Front-end install, build, and test
+      - name: Install Frontend Deps
+        run: |
+          cd $GITHUB_WORKSPACE
+          npm install
+      - name: Build Frontend
+        run: |
+          cd $GITHUB_WORKSPACE
+          npm run build
+      - name: Test Frontend
+        run: |
+          cd $GITHUB_WORKSPACE
+          npm test -- --watch=false
