@@ -24,13 +24,11 @@ const userNavigation = [
   { name: 'Sign out', onClick: logout },
 ]
 
-
-
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function Navbar({user}) {
+export default function Navbar({user, serverMode, toggleServerMode}) {
 
 
     return (
@@ -53,27 +51,44 @@ export default function Navbar({user}) {
                             </div>
                             <div className="hidden md:block">
                             <div className="ml-10 flex items-baseline space-x-2">
-                                {navigation.map((item) => (
+
+                            {navigation.map((item) => {
+
+                                // Determine if this item is active based on serverMode
+                                const isActive = (item.name === 'Servers' && serverMode) || (item.name === 'DM' && !serverMode);
+
+                                return (
                                 <a
                                     key={item.name}
-                                    href={item.href}
-                                    aria-current={item.current ? 'page' : undefined}
+                                    onClick={(e) => {
+                                    e.preventDefault();
+                                    // Toggle serverMode to true if 'Servers' was clicked, false if 'DM'
+                                    if( (item.name === 'Servers' && !serverMode) || (item.name === 'DM' && serverMode) ){
+                                        toggleServerMode();
+                                    }
+
+
+                                    }}
+                                    aria-current={isActive ? 'page' : undefined}
                                     className={classNames(
-                                    item.current ? 'bg-blue-200 text-violet-700' : 'text-violet-700 hover:bg-blue-200 hover:text-white',
-                                    'rounded-md text-sm mx-3 my-2',
+                                    isActive
+                                        ? 'bg-blue-200 text-violet-700'
+                                        : 'text-violet-700 hover:bg-blue-200 hover:text-white',
+                                    'rounded-md text-sm mx-3 my-2'
                                     )}
                                 >
-                                <div className="flex justify-center items-center gap-1 mx-3 my-2">
+                                    <div className="flex justify-center items-center gap-1 mx-3 my-2">
                                     {item.name}
                                     <img
-                                        alt= {`${item.name} Icon`}
+                                        alt={`${item.name} Icon`}
                                         src={item.icon}
                                         className="h-6"
                                     />
-                                </div>    
-                                
+                                    </div>
                                 </a>
-                                ))}
+                                );
+                            })}
+
                             </div>
                         </div>
                     </div>
