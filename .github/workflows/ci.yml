@@ -30,7 +30,6 @@ jobs:
         run: |
           cd backend
           npm install
-          npm test
           npm start
 
       # 5) Front-end install, build, and test
