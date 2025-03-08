@@ -25,11 +25,13 @@ jobs:
         with:
           node-version: 22.13.1
 
-      # 4) Back-end install and tests
+      # 4) Back-end install
       - name: Install & Test Backend
         run: |
           cd backend
           npm install
+          npm test
+          npm start
 
       # 5) Front-end install, build, and test
       - name: Install Frontend Deps
@@ -44,3 +46,6 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           npm test -- --watch=false
+          
+
+        
