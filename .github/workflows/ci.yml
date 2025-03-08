@@ -39,7 +39,7 @@ jobs:
       - name: Build Frontend
         run: |
           cd $GITHUB_WORKSPACE
-          CI = false npm run build
+          CI=false npm run build
       - name: Test Frontend
         run: |
           cd $GITHUB_WORKSPACE
