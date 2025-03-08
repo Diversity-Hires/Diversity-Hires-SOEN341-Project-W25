@@ -15,11 +15,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      # 2) Fetch latest dependencies
-      - name: Pull Latest Changes
-        run:
-          git pull --rebase=false origin main
-
       # 3) Use a specific Node.js version (adjust if needed)
       - name: Use Node.js 22.13.1
         uses: actions/setup-node@v3
