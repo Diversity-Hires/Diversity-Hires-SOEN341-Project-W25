@@ -11,6 +11,7 @@ export default function Dropdown({ open, setOpen, buttonRef, deleteMessages, sel
 
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  
   useEffect(() => {
     if (open && buttonRef.current && dropdownRef.current) {
       const buttonRect = buttonRef.current.getBoundingClientRect();
