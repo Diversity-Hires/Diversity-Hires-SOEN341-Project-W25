@@ -17,7 +17,9 @@ jobs:
 
       # 2) Fetch latest dependencies
       - name: Pull Latest Changes
-        run: git pull origin main
+        run: |
+          git config --global pull.rebase false
+          git pull origin main
 
       # 3) Use a specific Node.js version (adjust if needed)
       - name: Use Node.js 22.13.1
