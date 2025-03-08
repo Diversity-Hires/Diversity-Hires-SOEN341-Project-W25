@@ -32,6 +32,7 @@ jobs:
           npm install
           npm install firebase-admin
           npm start
+          exit
 
       # 5) Front-end install, build, and test
       - name: Install Frontend Deps
