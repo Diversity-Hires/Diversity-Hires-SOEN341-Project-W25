@@ -30,7 +30,8 @@ jobs:
         run: |
           cd backend
           npm install
-          npm start
+          npm startname: Install firebase-admin globally
+          run: npm install -g firebase-admin
 
       # 5) Front-end install, build, and test
       - name: Install Frontend Deps
