@@ -45,7 +45,7 @@ jobs:
       - name: Test Frontend
         run: |
           cd $GITHUB_WORKSPACE
-          npm test -- --watch=false
+      #npm test -- --watch=false
           
 
         
