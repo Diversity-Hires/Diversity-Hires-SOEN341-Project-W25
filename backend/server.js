@@ -420,8 +420,6 @@ app.delete('/api/servers/messages', apiKeyMiddleware, authMiddleware, async (req
 
 
 
-
-
 // ================ START SERVER ================
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
