@@ -34,6 +34,12 @@ export default function Registration({ open, setOpen, user, pass }) {
     // Handle form submission
     const handleSubmit = async (event) => {
         event.preventDefault(); // Prevent default form submission
+        //Check for Empty Fields
+        if (!userData.username.trim() || !userData.password.trim()){
+            Notiflix.Notify.failure("Please fill out all required fields!")
+            return;
+        }
+
         let failMessage = '';
 
         try {
@@ -70,6 +76,7 @@ export default function Registration({ open, setOpen, user, pass }) {
 
             Notiflix.Notify.failure(failMessage);
             console.error('Registration error:', error);
+            return;
         }
     };
 
