@@ -349,7 +349,47 @@ app.post('/api/servers/messages', apiKeyMiddleware, authMiddleware, async (req, 
   }
 });
 
+// Delete a user from a server (admin only)
+app.delete('/api/servers/remove-user', apiKeyMiddleware, authMiddleware, async (req, res) => {
+  try {
+    const { serverId, username } = req.body;
+    // Validate input
+    if (!serverId || !username) {
+      return res.status(400).json({ message: 'Missing required fields: serverId or username.' });
+    }
 
+    // Check if the server exists
+    const serverRef = db.ref(`servers/${serverId}`);
+    const serverSnapshot = await serverRef.once('value');
+    if (!serverSnapshot.exists()) {
+      return res.status(404).json({ message: 'Server not found.' });
+    }
+
+    // Check if the user exists in the server's users list
+    const userRefInServer = serverRef.child('users').child(username);
+    const userSnapshot = await userRefInServer.once('value');
+    if (!userSnapshot.exists()) {
+      return res.status(404).json({ message: 'User not found in this server.' });
+    }
+
+    // Remove the user from the server's users list
+    await userRefInServer.remove();
+
+    // Also remove the server from the user's server list
+    const userServersRef = db.ref(`users/${username}/servers/${serverId}`);
+    const userServersSnapshot = await userServersRef.once('value');
+    if (userServersSnapshot.exists()) {
+      await userServersRef.remove();
+    }
+
+    return res.status(200).json({ 
+      message: `User "${username}" removed from server successfully!`
+    });
+  } catch (error) {
+    console.error('Error removing user from server:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
 
 // Delete a message from a server (author or admin only)
 app.delete('/api/servers/messages', apiKeyMiddleware, authMiddleware, async (req, res) => {
