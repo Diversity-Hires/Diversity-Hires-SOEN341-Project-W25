@@ -99,6 +99,22 @@ async function generateServerId() {
   return serverId;
 }
 
+async function generateDmId() { // FILIP ADDED THIS
+  let DmId;
+  let snapshot;
+
+  do {
+    // random integer between 100 and 999
+    const randomInt = Math.floor(Math.random() * 900) + 100;
+    DmId = randomInt.toString();
+
+    // Check if this ID already exists
+    snapshot = await db.ref(`directmessages/${DmId}`).once('value');
+  } while (snapshot.exists());
+
+  return DmId;
+}
+
 // Check if user exists
 async function checkUser(username) {
   const usersRef = db.ref(`users/${username}`);
@@ -242,7 +258,63 @@ app.post('/api/new-server', apiKeyMiddleware, authMiddleware, async (req, res) =
   }
 });
 
+// Add a new DM
+app.post('/api/new-dm', apiKeyMiddleware, authMiddleware, async (req, res) => { //FILIP ADDED THIS
+  try {
+    const {users} = req.body; 
+    // serverName: string
+    // users: array of usernames (optional)
 
+    // Step 1: Generate a unique 3-digit server ID
+    const DmId = await generateDmId();
+
+    // Step 2: Format of the server Data
+    const newDMData = {
+      users: {},       // map of username -> role
+    };
+
+    // Build an array of users that exis
+    // The user who created the server is admin
+    newServerData.users[req.userId] = 'dms'; 
+
+    // Build an array of users that exis
+    const validatedUsers = [];
+
+    // If we have an array of additional users, add them as members
+    if (Array.isArray(users)) {
+      for (const username of users) {
+        // Check if user exists and remove from list if not
+        if (await checkUser(username)) { // Ensure await is used inside for...of
+          newServerData.users[username] = 'dms';
+          validatedUsers.push(username);
+        }
+      }
+    }
+
+    // Step 3: Write the new server to /servers/{serverId}
+    await db.ref(`directmessages/${DmId}`).set(newDMData);
+
+    // Step 4: Update each user's server list
+    // This includes the creator, so let's build an array of unique usernames
+    const userList = new Set([req.userId, ...(validatedUsers || [])]);
+
+    userList.forEach(async (username) => {
+      await db
+        .ref(`users/${username}/dms/${DmId}`)
+    });
+
+    return res.status(201).json({
+      message: 'DM created successfully.',
+      DM: {
+        id: DmId,
+        users: [...userList],
+      },
+    });
+  } catch (error) {
+    console.error('Error creating dm:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
 
 // Add a user to a server
 app.post('/api/servers/add-user', apiKeyMiddleware, authMiddleware, async (req, res) => {
@@ -349,7 +421,62 @@ app.post('/api/servers/messages', apiKeyMiddleware, authMiddleware, async (req, 
   }
 });
 
+// Send a message in a private conversation
+app.post('/api/dms/messages', apiKeyMiddleware, authMiddleware, async (req, res) => { //FILIP WROTE THIS PART
+  try {
+    const { text, DmId } = req.body; // text of the message
 
+    // Validate input
+    if (!DmId || !text) {
+      return res.status(400).json({ message: 'Missing DmId or text.' });
+    }
+
+    // Check if the server exists
+    const DMRef = db.ref(`directmessages/${DmId}`);
+    const DMSnapshot = await DMRef.once('value');
+    if (!DMSnapshot.exists()) {
+      return res.status(404).json({ message: 'Conversation not found.' });
+    }
+
+    // The current user is stored in req.userId by authMiddleware
+    const username = req.userId;
+
+    // Check if the user is part of the server
+    const userRef = serverRef.child('users').child(username);
+    const userSnapshot = await userRef.once('value');
+    if (!userSnapshot.exists()) {
+      // If the user isn't listed in server's users node, they aren't a member
+      return res.status(403).json({ message: 'You are not a member of this conversation.' });
+    }
+
+    const timestamp = Date.now(); // or new Date().toISOString()
+
+    // Push a new message under servers/{serverId}/messages
+    const messagesRef = DMRef.child('messages');
+    const newMessageRef = messagesRef.push();
+
+    await newMessageRef.set({
+      text,
+      username,
+      timestamp
+    });
+
+    // Return success along with the new message ID
+    return res.status(201).json({
+      message: 'Message sent successfully!',
+      data: {
+        id: newMessageRef.key,
+        text,
+        username,
+        timestamp
+      }
+    });
+
+  } catch (error) {
+    console.error('Error sending message:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
 
 // Delete a message from a server (author or admin only)
 app.delete('/api/servers/messages', apiKeyMiddleware, authMiddleware, async (req, res) => {
@@ -418,7 +545,64 @@ app.delete('/api/servers/messages', apiKeyMiddleware, authMiddleware, async (req
   }
 });
 
+// Delete a DM message
+app.delete('/api/directmessages/messages', apiKeyMiddleware, authMiddleware, async (req, res) => { //FILIP WROTE THIS PART
+  try {
+    const { DmId, selectedMessages } = req.body; 
+ 
+    if (!DmId || !Array.isArray(selectedMessages) || selectedMessages.length === 0) {
+      return res.status(400).json({ message: 'Missing or invalid DmId or messageIds array.' });
+    }
 
+    // Check if the server exists
+    const DmRef = db.ref(`directmessages/${DmId}`);
+    const DmSnapshot = await DmRef.once('value');
+    if (!DmSnapshot.exists()) {
+      return res.status(404).json({ message: 'Conversation not found.' });
+    }
+
+    // Track outcomes
+    const deleted = [];
+    const notFound = [];
+    const errors = [];
+
+    // Loop through each messageId
+    for (const messageId of selectedMessages) {
+      try {
+        // Check if the message exists
+        const messageRef = DmRef.child('messages').child(messageId);
+        const messageSnapshot = await messageRef.once('value');
+        if (!messageSnapshot.exists()) {
+          notFound.push(messageId);
+          continue;
+        }
+
+        // Delete the message
+        await messageRef.remove();
+        deleted.push(messageId);
+
+      } catch (innerErr) {
+        console.error(`Error deleting messageId ${messageId}:`, innerErr);
+        // Capture this error so we can respond with partial results
+        errors.push({ messageId, error: innerErr?.message });
+      }
+    }
+
+    // Summarize the outcome
+    return res.status(200).json({
+      message: 'Batch deletion complete.',
+      results: {
+        deleted,   // array of message IDs successfully deleted
+        notFound,  // array of message IDs that did not exist
+        errors     // array of { messageId, error } for any exceptions
+      }
+    });
+
+  } catch (error) {
+    console.error('Error deleting messages:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
 
 // ================ START SERVER ================
 app.listen(PORT, () => {
