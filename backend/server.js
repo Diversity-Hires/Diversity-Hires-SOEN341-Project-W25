@@ -84,38 +84,22 @@ function authMiddleware(req, res, next) {
 
 
 // Utility function to generate a unique 3-digit server ID
-async function generateServerId() {
-  let serverId;
+async function generateId(location) {
+  let Id;
   let snapshot;
 
   do {
     // random integer between 100 and 999
     const randomInt = Math.floor(Math.random() * 900) + 100;
-    serverId = randomInt.toString();
+    Id = randomInt.toString();
 
     // Check if this ID already exists
-    snapshot = await db.ref(`servers/${serverId}`).once('value');
+    snapshot = await db.ref(`${location}/${Id}`).once('value');
   } while (snapshot.exists());
 
-  return serverId;
+  return Id;
 }
 
-
-async function generateDmId() { // FILIP ADDED THIS
-  let DmId;
-  let snapshot;
-
-  do {
-    // random integer between 100 and 999
-    const randomInt = Math.floor(Math.random() * 900) + 100;
-    DmId = randomInt.toString();
-
-    // Check if this ID already exists
-    snapshot = await db.ref(`directmessages/${DmId}`).once('value');
-  } while (snapshot.exists());
-
-  return DmId;
-}
 
 // Check if user exists
 async function checkUser(username) {
@@ -207,7 +191,7 @@ app.post('/api/new-server', apiKeyMiddleware, authMiddleware, async (req, res) =
     }
 
     // Step 1: Generate a unique 3-digit server ID
-    const serverId = await generateServerId();
+    const serverId = await generateId("servers");
 
     // Step 2: Format of the server Data
     const newServerData = {
@@ -266,11 +250,10 @@ app.post('/api/new-server', apiKeyMiddleware, authMiddleware, async (req, res) =
 app.post('/api/new-dm', apiKeyMiddleware, authMiddleware, async (req, res) => { //FILIP ADDED THIS
   try {
     const {users} = req.body; 
-    // serverName: string
-    // users: array of usernames (optional)
+    // users: array of usernames
 
     // Step 1: Generate a unique 3-digit server ID
-    const DmId = await generateDmId();
+    const DmId = await generateId("directmessages");
 
     // Step 2: Format of the server Data
     const newDMData = {
@@ -279,9 +262,9 @@ app.post('/api/new-dm', apiKeyMiddleware, authMiddleware, async (req, res) => { 
 
     // Build an array of users that exis
     // The user who created the server is admin
-    newServerData.users[req.userId] = 'dms'; 
+    newDMData.users[req.userId] = 'dm'; 
 
-    // Build an array of users that exis
+    // Build an array of users that exist
     const validatedUsers = [];
 
     // If we have an array of additional users, add them as members
@@ -289,13 +272,13 @@ app.post('/api/new-dm', apiKeyMiddleware, authMiddleware, async (req, res) => { 
       for (const username of users) {
         // Check if user exists and remove from list if not
         if (await checkUser(username)) { // Ensure await is used inside for...of
-          newServerData.users[username] = 'dms';
+          newDMData.users[username] = 'dm';
           validatedUsers.push(username);
         }
       }
     }
 
-    // Step 3: Write the new server to /servers/{serverId}
+    // Step 3: Write the new dm to /directmessages/{DmId}
     await db.ref(`directmessages/${DmId}`).set(newDMData);
 
     // Step 4: Update each user's server list
@@ -493,7 +476,7 @@ app.post('/api/dms/messages', apiKeyMiddleware, authMiddleware, async (req, res)
     const username = req.userId;
 
     // Check if the user is part of the server
-    const userRef = serverRef.child('users').child(username);
+    const userRef = DMRef.child('users').child(username);
     const userSnapshot = await userRef.once('value');
     if (!userSnapshot.exists()) {
       // If the user isn't listed in server's users node, they aren't a member
@@ -528,6 +511,7 @@ app.post('/api/dms/messages', apiKeyMiddleware, authMiddleware, async (req, res)
     return res.status(500).json({ message: 'Server error.' });
   }
 });
+
 
 // Delete a message from a server (author or admin only)
 app.delete('/api/servers/messages', apiKeyMiddleware, authMiddleware, async (req, res) => {
