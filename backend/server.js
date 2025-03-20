@@ -335,6 +335,48 @@ app.post('/api/servers/add-user', apiKeyMiddleware, authMiddleware, async (req, 
 });
 
 
+// add a user to the welcome server
+app.post('/api/servers/welcomeserver', apiKeyMiddleware, async (req, res) => {
+  try {
+    const {username} = req.body; 
+    // username: string, role: optional (e.g. "member", "admin", etc.)
+
+    const serverId = '001';
+    const role = 'member';
+
+    // Validate input
+    if (!serverId || !username) {
+      return res.status(400).json({ message: 'Missing required fields: serverId or username.' });
+    }
+
+    // Check if the server exists
+    const serverRef = db.ref(`servers/${serverId}`);
+    const serverSnapshot = await serverRef.once('value');
+    if (!serverSnapshot.exists()) {
+      return res.status(404).json({ message: 'Server not found.' });
+    }
+
+    // Check if the username exists
+    if(!(await checkUser(username))){
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Add or update this user under /servers/<serverName>/users/<username>
+    // If no role is provided, default to 'member'
+    await serverRef.child('users').child(username).set(role || 'member');
+
+    const serverName = (await serverRef.child('name').once('value')).val(); //get and assign the name of the server in one line
+
+
+    return res.status(200).json({ 
+      message: `User "${username}" added to server "${serverName}" successfully!`
+    });
+  } catch (error) {
+    console.error('Error adding user to server:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
 // Send a message to a server
 app.post('/api/servers/messages', apiKeyMiddleware, authMiddleware, async (req, res) => {
   try {
