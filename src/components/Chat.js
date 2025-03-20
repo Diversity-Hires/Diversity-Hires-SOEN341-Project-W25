@@ -13,7 +13,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
 
-export default function Chat({ messages, selectedServer, isAdmin, openAddUser, openChangeRole, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle, getUpdatedRoles }) {
+export default function Chat({ messages, selectedServer, isAdmin, openAddUser, openChangeRole, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle, getUpdatedRoles, serverMode }) {
   
   const [newMessage, setNewMessage] = useState('');
   const [open, setOpen] = useState(false);
@@ -58,7 +58,11 @@ export default function Chat({ messages, selectedServer, isAdmin, openAddUser, o
 
   const sendMessage = async () => {
     try {
-      const response = await axios.post(`${API_URL}/servers/messages`,
+      const destinationRef = serverMode
+        ? `${API_URL}/servers/messages`
+        : `${API_URL}/dms/messages`
+        
+      const response = await axios.post(destinationRef,
         {
         text: newMessage,
         serverId: selectedServer.id,

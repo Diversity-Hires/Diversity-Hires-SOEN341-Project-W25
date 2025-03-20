@@ -224,12 +224,6 @@ app.post('/api/new-server', apiKeyMiddleware, authMiddleware, async (req, res) =
     // This includes the creator, so let's build an array of unique usernames
     const userList = new Set([req.userId, ...(validatedUsers || [])]);
 
-    userList.forEach(async (username) => {
-      await db
-        .ref(`users/${username}/servers/${serverId}`)
-        .set(serverName);
-    });
-
     return res.status(201).json({
       message: 'Server created successfully.',
       server: {
@@ -285,10 +279,7 @@ app.post('/api/new-dm', apiKeyMiddleware, authMiddleware, async (req, res) => { 
     // This includes the creator, so let's build an array of unique usernames
     const userList = new Set([req.userId, ...(validatedUsers || [])]);
 
-    userList.forEach(async (username) => {
-      await db
-        .ref(`users/${username}/dms/${DmId}`)
-    });
+    
 
     return res.status(201).json({
       message: 'DM created successfully.',
@@ -333,14 +324,6 @@ app.post('/api/servers/add-user', apiKeyMiddleware, authMiddleware, async (req, 
 
     const serverName = (await serverRef.child('name').once('value')).val(); //get and assign the name of the server in one line
 
-    // Add the server to the list under /users/<username>/servers
-    const userServersRef = db.ref(`users/${username}/servers/${serverId}`);
-    const userServersSnaphot = await userServersRef.once('value');
-    if(!userServersSnaphot.exists()){
-      await db
-          .ref(`users/${username}/servers/${serverId}`)
-          .set(serverName);
-    }
 
     return res.status(200).json({ 
       message: `User "${username}" added to server "${serverName}" successfully!`
@@ -438,13 +421,6 @@ app.delete('/api/servers/remove-user', apiKeyMiddleware, authMiddleware, async (
     // Remove the user from the server's users list
     await userRefInServer.remove();
 
-    // Also remove the server from the user's server list
-    const userServersRef = db.ref(`users/${username}/servers/${serverId}`);
-    const userServersSnapshot = await userServersRef.once('value');
-    if (userServersSnapshot.exists()) {
-      await userServersRef.remove();
-    }
-
     return res.status(200).json({ 
       message: `User "${username}" removed from server successfully!`
     });
@@ -458,15 +434,15 @@ app.delete('/api/servers/remove-user', apiKeyMiddleware, authMiddleware, async (
 // Send a message in a private conversation
 app.post('/api/dms/messages', apiKeyMiddleware, authMiddleware, async (req, res) => { //FILIP WROTE THIS PART
   try {
-    const { text, DmId } = req.body; // text of the message
+    const { text, serverId } = req.body; // text of the message
 
     // Validate input
-    if (!DmId || !text) {
-      return res.status(400).json({ message: 'Missing DmId or text.' });
+    if (!serverId || !text) {
+      return res.status(400).json({ message: 'Missing Id or text.' });
     }
 
     // Check if the server exists
-    const DMRef = db.ref(`directmessages/${DmId}`);
+    const DMRef = db.ref(`directmessages/${serverId}`);
     const DMSnapshot = await DMRef.once('value');
     if (!DMSnapshot.exists()) {
       return res.status(404).json({ message: 'Conversation not found.' });
