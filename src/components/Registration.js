@@ -20,7 +20,7 @@ export default function Registration({ open, setOpen, user, pass }) {
           username: user || '',
           password: pass || ''
       });
-  }, [user, pass]);
+    }, [user, pass]);
 
     // Handle input change
     const handleInputChange = (event) => {
@@ -57,6 +57,23 @@ export default function Registration({ open, setOpen, user, pass }) {
             // Save failed registration message if there is one
             if (res.data.message) {
                 failMessage = res.data.message;
+            }
+
+            // Add user to welcome server after successful registration
+            try {
+                await axios.post(`${API_URL}/servers/welcomeserver`, {
+                    username: userData.username,
+                }, 
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': API_KEY
+                    }
+                });
+                console.log(`User ${userData.username} added to welcome server successfully`);
+            } catch (serverError) {
+                // Log server add error but don't disrupt user flow
+                console.error('Error adding user to welcome server:', serverError);
             }
 
             Notiflix.Notify.success("Registration was successful. Please log in!");
