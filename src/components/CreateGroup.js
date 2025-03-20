@@ -11,6 +11,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
 export default function CreateGroup({ open, setOpen, userList, currentUser, refresh }) {
+  const [search, setSearch] = useState('');
   const [groupData, setGroupData] = useState({
     name: '',
     description: '',
@@ -19,8 +20,10 @@ export default function CreateGroup({ open, setOpen, userList, currentUser, refr
 
   const token = localStorage.getItem('token');
 
-  // Filter out the current user
-  const displayUsers = userList.filter((u) => u !== currentUser);
+  // Filter for search and take out the current user
+  const displayUsers = userList.filter(
+    (u) => u !== currentUser && u.toLowerCase().includes(search.toLowerCase())
+);
 
   // 1. Handle text/textarea changes
   const handleInputChange = (event) => {
@@ -71,6 +74,7 @@ export default function CreateGroup({ open, setOpen, userList, currentUser, refr
 
       Notiflix.Notify.success('Server created successfully!');
       setGroupData({ name: '', description: '', members: [] });
+      setSearch('');
       refresh();
       setOpen(false);
     } catch (error) {
@@ -165,29 +169,66 @@ export default function CreateGroup({ open, setOpen, userList, currentUser, refr
                         </dd>
                       </div>
 
+
+
                       {/* Member Selection */}
                       <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
                         <dt className="text-sm text-gray-900">
                           Members
                         </dt>
                         <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
-                          <div className="grid grid-cols-2 flex flex-col gap-2">
-                            {displayUsers.map((user) => {
-                              const isSelected = groupData.members.includes(user);
-                              return (
-                                <div
-                                  key={user}
-                                  onClick={() => toggleMember(user)}
-                                  className={`cursor-pointer px-3 py-2 rounded-md transition-colors ${
-                                    isSelected ? 'bg-blue-200' : 'bg-white'
-                                  } hover:bg-blue-100`}
+                          
+                          {/* Search Bar */}
+                          <div className="relative flex-1 mb-4">
+                            <input
+                                type="text"
+                                placeholder="Search for a friend"
+                                className="w-full p-2 pl-4 pr-10 bg-white rounded-md text-sm text-gray-900 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                            {/* Search Icon inside Input */}
+                            <div className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400">
+                                <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="w-5 h-5"
                                 >
-                                  <span className="text-sm text-gray-800">
-                                    {user}
-                                  </span>
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="m21 21-5.197-5.197m0 0A7.5 
+                                    7.5 0 1 0 5.196 5.196a7.5 7.5 
+                                    0 0 0 10.607 10.607Z"
+                                />
+                                </svg>
+                            </div>
+                          </div>
+
+                          {/* User Selection Section */}
+                          <div className="px-4 py-4">
+                            {/* Make it scrollable if the list is long */}
+                            <div className="overflow-y-auto h-[30vh] border border-gray-200 rounded-md p-2">
+                                <div className="grid grid-cols-1 gap-2">
+                                {displayUsers.map((user) => {
+                                const isSelected = groupData.members.includes(user);
+                                    return (
+                                    <div
+                                        key={user}
+                                        onClick={() => toggleMember(user)}
+                                        className={`cursor-pointer px-3 py-2 rounded-md transition-colors 
+                                        ${isSelected ? 'bg-blue-200' : 'bg-white'} 
+                                        hover:bg-blue-100`}
+                                    >
+                                        <span className="text-sm text-gray-800">{user}</span>
+                                    </div>
+                                    );
+                                })}
                                 </div>
-                              );
-                            })}
+                            </div>
                           </div>
                         </dd>
                       </div>

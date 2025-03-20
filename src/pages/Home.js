@@ -14,6 +14,7 @@ import { getDatabase, ref, get, onValue, off } from 'firebase/database';
 //import components
 import Navbar from '../components/Navbar.js'
 import CreateServerPopUp from '../components/CreateGroup';
+import CreateDM from '../components/CreateDM.js';
 import AddUserPopUp from '../components/Add_user';
 import ChangeRoleModal from '../components/ChangeRoleModal.js'
 
@@ -29,6 +30,7 @@ function Home() {
   const [selectedMessages, setSelectedMessages] = useState([]);//This array keeps track of selected messages to be deleted
   const [selectedServerUsers, setSelectedServerUsers] = useState(null);
   const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
+  const [openCreateDMDialog, setOpenCreateDMDialog] = useState(false);
   const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
   const [openChangeRoleDialog, setOpenChangeRoleDialog] = useState(false);  
   const [isDeleteMode, setIsDeleteMode] = useState(false); //This keeps track of delete mode when admin deletes messages
@@ -41,8 +43,8 @@ function Home() {
     setOpenCreateServerDialog(true);
   };
 
-  const clearSelectedMessages = () => {
-    setOpenCreateServerDialog(true);
+  const handleCreateDM = () => {
+    setOpenCreateDMDialog(true);
   };
 
   const handleDeleteModeToggle = () => {
@@ -209,7 +211,7 @@ function Home() {
           });
 
           setUserServers(serversArray);
-          console.log(serversArray);
+          console.log('Servers array:',serversArray);
         } else {
           setUserServers([]); // no servers yet
         }
@@ -372,7 +374,7 @@ function Home() {
         <Sidebar 
         servers={userServers} 
         setSelectedServer={setSelectedServer}
-        openCreateServer={handleCreateServer}
+        openCreateServerOrDM={serverMode ? handleCreateServer : handleCreateDM} 
         selectedServer={selectedServer}
         className="w-64 min-w-32 flex-shrink-0" 
         />
@@ -406,6 +408,15 @@ function Home() {
               refresh = {refreshServersAndDMs}
             />
       
+      <CreateDM
+              open={openCreateDMDialog}
+              setOpen = {setOpenCreateDMDialog}
+              currentUser={currentUser}
+              userList = {userList}
+              refresh = {refreshServersAndDMs}
+              currentDMs = {userServers}
+            />
+
       <AddUserPopUp
               open={openAddUserDialog}
               setOpen = {setOpenAddUserDialog}
@@ -421,6 +432,8 @@ function Home() {
               serverUsers = {selectedServerUsers}
               getUpdatedRoles = {getServerUsers}
             />
+
+
 
     </div>
   );
