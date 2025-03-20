@@ -149,7 +149,9 @@ function Home() {
   // Function to fetch messages from Realtime DB
   function getMessagesForServer() {
     const db = getDatabase();
-    const messagesRef = ref(db, `servers/${selectedServer.id}/messages`);
+    const messagesRef = serverMode
+    ? ref(db, `servers/${selectedServer.id}/messages`)
+    : ref(db, `directmessages/${selectedServer.id}/messages`);
 
     // Turn off any old listener first, to avoid duplicates if selectedServer changes
     off(messagesRef);
@@ -175,163 +177,129 @@ function Home() {
   }
 
 
-// Function to get the list of servers for the user
-function getServers() {
-  const db = getDatabase();
-  const serversRef = ref(db, `users/${currentUser}/servers`);
 
-  get(serversRef)
-    .then((snapshot) => {
-      if (!snapshot.exists()) {
-        setUserServers([]);
-        return;
-      }
-
-      const data = snapshot.val(); // e.g., { "165": "Server Name A", "456": "Server Name B" }
-      const serverKeys = Object.keys(data);
-
-      // Build an array of promises: each promise checks the member count
-      const promises = serverKeys.map((serverID) => {
-        return ServerUsersHelper(serverID)
-          .then((memberCount) => {
-            // If this server has 3 or more members, return its data
-            if (memberCount >= 3) {
-              return {
-                id: serverID,
-                name: data[serverID],
-              };
-            } else {
-              // Return null if it doesn't match the member criteria
-              return null;
-            }
-          });
-      });
-
-      // Wait for all membership lookups
-      Promise.all(promises)
-        .then((results) => {
-          // Filter out null entries
-          const filteredServers = results.filter((server) => server !== null);
-          setUserServers(filteredServers);
-        })
-        .catch((error) => {
-          console.error('Error filtering servers by member count:', error);
-          setUserServers([]);
-        });
-    })
-    .catch((error) => {
-      console.error('Error fetching servers:', error);
-      setUserServers([]);
-    });
-}
-
-
-
-
-  function ServerUsersHelper(ServerID){
-
+  // Function to get the list of servers for the user
+  function getServers() {
     const db = getDatabase();
-    const usersRef = ref(db, `servers/${ServerID}/users`);
+    const serversRef = ref(db, `servers`);
 
-    return get(usersRef)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          let userCount = 0;
-          
-          snapshot.forEach(() => {
-              userCount+=1;
-            });
-            return userCount;
-          
-        }else{
-          return 0;
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching users for this server:', error);
-        return 0;
-      });
-
-  }
-
-
-  function DMServerNameHelper(ServerID) {
-    const db = getDatabase();
-    const usersRef = ref(db, `servers/${ServerID}/users`);
-  
-    return get(usersRef)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          let firstValidName = null;
-  
-          snapshot.forEach((childSnapshot) => {
-            // Get the username from the key (like "csuciu" or "filip")
-            const username = childSnapshot.key;
-            //console.log("Username is ", username, ", Logged in user is ", currentUser);
-            
-            if (username !== currentUser) {
-              firstValidName = username;
-              return true; // Stop iteration once we find the first valid name
-            }
-          });
-  
-          return firstValidName || ""; // Return first valid name or empty string if none found
-        } else {
-          return ""; // Return empty string if no users are found
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching users for this server:', error);
-        return "";
-      });
-  }
-
-
-
-  function getDMs() {
-    const db = getDatabase();
-    const serversRef = ref(db, `users/${currentUser}/servers`);
-  
     get(serversRef)
       .then((snapshot) => {
         if (snapshot.exists()) {
-          const data = snapshot.val();
+          const data = snapshot.val(); // e.g., { 165: "Server Name A", 456: "Server Name B" }
           const serverKeys = Object.keys(data);
-          const promises = [];
-  
-          // Create an array of promises
-          serverKeys.forEach((key) => {
-            const promise = ServerUsersHelper(key)
-              .then(memberCount => {
-                if (memberCount === 2) {
-                  return DMServerNameHelper(key)
-                    .then(tempname => {
-                      return { id: key, name: tempname || '' };
-                    });
-                }
-                return null;
+          
+
+          // We'll store the servers the user belongs to in this array
+          const serversArray = [];
+
+          // Iterate through each server
+          serverKeys.forEach((serverId) => {
+            const serverData = data[serverId];
+
+            // Check if there's a 'users' property and if it includes the currentUserId
+            if (serverData.users && serverData.users[currentUser]) {
+              // Add server to the array
+              serversArray.push({
+                id: serverId,
+                name: serverData.name || 'Unnamed Server',
+                // add any other server info if needed
               });
-            promises.push(promise);
+            }
           });
-  
-          // Wait for all promises to resolve
-          Promise.all(promises)
-            .then(results => {
-              // Filter out null values (servers that don't meet the memberCount === 2 condition)
-              const DMArray2 = results.filter(item => item !== null);
-              setUserServers(DMArray2);
-              //console.log(DMArray2);
-            });
+
+          setUserServers(serversArray);
+          console.log(serversArray);
         } else {
-          setUserServers([]);
+          setUserServers([]); // no servers yet
         }
       })
       .catch((error) => {
         console.error('Error fetching servers:', error);
-        setUserServers([]);
+      });
+  }
+
+
+
+  async function DmNameHelper(DmID) {
+    const db = getDatabase();
+    const usersRef = ref(db, `directmessages/${DmID}/users`);
+  
+    try {
+      const snapshot = await get(usersRef);
+      if (snapshot.exists()) {
+        let firstValidName = null;
+  
+        snapshot.forEach((childSnapshot) => {
+          const username = childSnapshot.key;
+          if (username !== currentUser) {
+            firstValidName = username;
+            // We don't break the forEach in Firebase snapshot iteration
+            // but once a name is found, it’s effectively the “first valid” one.
+          }
+        });
+  
+        // Return the first valid name or empty string
+        return firstValidName || '';
+      } else {
+        // No snapshot found
+        return '';
+      }
+    } catch (error) {
+      console.error('Error fetching users for this server:', error);
+      return '';
+    }
+  }
+
+
+  function getDMs() {
+    const db = getDatabase();
+    const dmsRef = ref(db, 'directmessages');
+  
+    get(dmsRef)
+      .then((snapshot) => {
+        if (!snapshot.exists()) {
+          setUserServers([]);
+          return;
+        }
+        const data = snapshot.val();
+        const dmKeys = Object.keys(data);
+  
+        // We'll transform each dmId into a promise that resolves with the DM object
+        const dmPromises = dmKeys.map((dmId) => {
+          const dmData = data[dmId];
+  
+          // If the current user is part of this DM's users
+          if (dmData.users && dmData.users[currentUser]) {
+            // Call DmNameHelper, which returns a promise for the other user's name
+            return DmNameHelper(dmId).then((dmName) => {
+              return {
+                id: dmId,
+                name: dmName || 'Unnamed'
+              };
+            });
+          }
+          // If the user is not part of this DM, return null so we can filter it out
+          return null;
+        });
+  
+        // Resolve all DmNameHelper calls before updating your state/array
+        return Promise.all(dmPromises);
+      })
+      .then((dmEntries) => {
+        // Filter out null entries from DMs that don't include currentUser
+        const dmsArray = dmEntries.filter((item) => item !== null);
+  
+        // Now update your state or do what you need with the array
+        setUserServers(dmsArray);
+        console.log('DM array:', dmsArray);
+      })
+      .catch((error) => {
+        console.error('Error fetching direct messages:', error);
       });
   }
   
+
 
   // Function to get the list of all users
   function getUsers() {
@@ -420,6 +388,7 @@ function getServers() {
             selectedMessages={selectedMessages}
             isDeleteMode = {isDeleteMode}
             handleDeleteModeToggle = {handleDeleteModeToggle}
+            serverMode = {serverMode}
 
             className="flex-1 overflow-auto"
             
