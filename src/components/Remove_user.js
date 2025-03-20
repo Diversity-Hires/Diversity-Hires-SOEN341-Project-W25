@@ -1,17 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
+import axios from "axios";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import Notiflix from "notiflix";
 
-export default function RemoveUser({ open, setOpen, serverUsers, updateUserList }) {
+// Assume you have your API_URL and API_KEY somewhere (env or config)
+const API_URL = process.env.REACT_APP_API_URL;
+const API_KEY = process.env.REACT_APP_API_KEY;
+
+export default function RemoveUser({ open, setOpen, serverId, serverUsers, userList, updateUserList }) {
   const [selectedUser, setSelectedUser] = useState("");
+  const [displayUsers, setDisplayUsers] = useState([]); // ✅ Same as AddUser.js
+
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
-    if (!serverUsers) resizeTo
-  }, [open, serverUsers]);
+    if (!userList || !serverUsers) return; // Prevent running if undefined
+    
+    // ✅ Copy AddUser.js logic: Filter users who are in the server
+    const tempUsers = userList.filter((u) => 
+      (serverUsers ?? []).some((srvUser) => srvUser.username === u)
+    );
 
-  const handleRemoveUser = (event) => {
+    setDisplayUsers(tempUsers); // ✅ Store filtered users separately
+  }, [userList, serverUsers]); 
+
+  // Handle user removal
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!selectedUser) {
@@ -19,18 +35,35 @@ export default function RemoveUser({ open, setOpen, serverUsers, updateUserList 
       return;
     }
 
-    Notiflix.Notify.success(`User ${selectedUser} removed successfully!`);
-    
-    updateUserList(selectedUser);
+    try {
+      await axios.delete(
+        `${API_URL}/servers/remove-user`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "x-api-key": API_KEY,
+          },
+          data: {
+            serverId: serverId,
+            username: selectedUser,
+          },
+        }
+      );
 
-    setSelectedUser(""); 
-    setOpen(false); 
+      Notiflix.Notify.success("User removed successfully!");
+      updateUserList(selectedUser);
+      setOpen(false);
+    } catch (error) {
+      Notiflix.Notify.failure(error.response?.data?.message || "Failed to remove user.");
+      console.error("User removal error:", error);
+    }
   };
 
   return (
     <Transition show={open} as={Fragment}>
       <Dialog as="div" className="relative z-30" onClose={() => setOpen(false)}>
-        {/* Modal Background */}
+        {/* Backdrop */}
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -45,7 +78,7 @@ export default function RemoveUser({ open, setOpen, serverUsers, updateUserList 
 
         {/* Modal Panel */}
         <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
+          <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -55,8 +88,8 @@ export default function RemoveUser({ open, setOpen, serverUsers, updateUserList 
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:w-full sm:max-w-lg">
-                {/* Close Button */}
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                {/* Close Button X */}
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
@@ -70,35 +103,62 @@ export default function RemoveUser({ open, setOpen, serverUsers, updateUserList 
                   <h3 className="text-lg font-medium text-gray-900">
                     Remove User from Server
                   </h3>
+                  <p className="mt-1 text-sm text-gray-900">
+                    Please select a user to remove.
+                  </p>
 
-                  {/* User Selection Dropdown */}
-                  <div className="mt-4">
-                    <label className="text-sm text-gray-900">Select User:</label>
-                    <select
-                      className="w-full mt-2 p-2 border rounded-md"
-                      value={selectedUser}
-                      onChange={(e) => setSelectedUser(e.target.value)}
-                    >
-                      <option value="" disabled>-- Select a user --</option>
-                      {serverUsers && serverUsers.map((user, index) => (
-                        <option key={index} value={user.username}>{user.username}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <form
+                    onSubmit={handleSubmit}
+                    className="mt-6 border-t border-gray-100"
+                  >
+                    <dl className="divide-y divide-gray-100">
 
-                  {/* Buttons */}
-                  <div className="mt-4 flex justify-end">
-                    <button type="button" onClick={() => setOpen(false)} className="mr-2 text-gray-700">
-                      Cancel
-                    </button>
-                    <button 
-                      type="submit" 
-                      onClick={handleRemoveUser}
-                      className="bg-red-600 text-white px-4 py-2 rounded-md"
-                    >
-                      Remove User
-                    </button>
-                  </div>
+                      {/* User Dropdown */}
+                      <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                        <dt className="text-sm text-gray-900">Select User</dt>
+                        <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
+                          <select
+                            id="username"
+                            name="username"
+                            value={selectedUser}
+                            onChange={(e) => setSelectedUser(e.target.value)}
+                            className="w-full rounded-md px-3 py-1.5 bg-gray-50 outline outline-1 outline-gray-300 focus:outline-red-600"
+                          >
+                            {/* Default option */}
+                            <option value="" disabled>-- Select a user --</option>
+
+                            {/* ✅ Copying AddUser logic: Use filtered `displayUsers` */}
+                            {displayUsers.map((user, index) => (
+                              <option key={index} value={user}>
+                                {user}
+                              </option>
+                            ))}
+                          </select>
+                        </dd>
+                      </div>
+
+                    </dl>
+
+                    {/* Buttons */}
+                    <div className="mt-6 flex items-center justify-end px-3 py-3 gap-x-6">
+                      {/* Cancel Button */}
+                      <button
+                        type="button"
+                        onClick={() => setOpen(false)}
+                        className="text-sm font-medium text-gray-900"
+                      >
+                        Cancel
+                      </button>
+
+                      {/* Remove Button */}
+                      <button
+                        type="submit"
+                        className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500"
+                      >
+                        Remove User
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </Dialog.Panel>
             </Transition.Child>
