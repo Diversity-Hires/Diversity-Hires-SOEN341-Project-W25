@@ -109,7 +109,7 @@ export default function Sidebar({ servers, openCreateServerOrDM, setSelectedServ
             ))}
           </ul>
         ) : (
-          <p className="text-gray-500 text-sm">No servers found</p>
+          <p className="text-gray-500 text-sm">Nothing found</p>
         )}
       </div>
     </div>
