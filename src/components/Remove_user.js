@@ -8,11 +8,9 @@ export default function RemoveUser({ open, setOpen, serverUsers, updateUserList 
   const [selectedUser, setSelectedUser] = useState("");
 
   useEffect(() => {
-    if (!serverUsers) return;
-    setSelectedUser(""); // Reset selected user when modal opens
+    if (!serverUsers) resizeTo
   }, [open, serverUsers]);
 
-  // Simulate user removal (UI only, no backend)
   const handleRemoveUser = (event) => {
     event.preventDefault();
 
@@ -23,11 +21,10 @@ export default function RemoveUser({ open, setOpen, serverUsers, updateUserList 
 
     Notiflix.Notify.success(`User ${selectedUser} removed successfully!`);
     
-    // Update UI by removing the selected user
     updateUserList(selectedUser);
 
-    setSelectedUser(""); // Reset selection
-    setOpen(false); // Close modal
+    setSelectedUser(""); 
+    setOpen(false); 
   };
 
   return (
