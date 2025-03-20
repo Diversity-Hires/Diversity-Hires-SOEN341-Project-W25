@@ -20,7 +20,7 @@ export default function Registration({ open, setOpen, user, pass }) {
           username: user || '',
           password: pass || ''
       });
-  }, [user, pass]);
+    }, [user, pass]);
 
     // Handle input change
     const handleInputChange = (event) => {
@@ -34,6 +34,12 @@ export default function Registration({ open, setOpen, user, pass }) {
     // Handle form submission
     const handleSubmit = async (event) => {
         event.preventDefault(); // Prevent default form submission
+        //Check for Empty Fields
+        if (!userData.username.trim() || !userData.password.trim()){
+            Notiflix.Notify.failure("Please fill out all required fields!")
+            return;
+        }
+
         let failMessage = '';
 
         try {
@@ -53,6 +59,23 @@ export default function Registration({ open, setOpen, user, pass }) {
                 failMessage = res.data.message;
             }
 
+            // Add user to welcome server after successful registration
+            try {
+                await axios.post(`${API_URL}/servers/welcomeserver`, {
+                    username: userData.username,
+                }, 
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': API_KEY
+                    }
+                });
+                console.log(`User ${userData.username} added to welcome server successfully`);
+            } catch (serverError) {
+                // Log server add error but don't disrupt user flow
+                console.error('Error adding user to welcome server:', serverError);
+            }
+
             Notiflix.Notify.success("Registration was successful. Please log in!");
             
             // Reset the form after successful registration
@@ -70,6 +93,7 @@ export default function Registration({ open, setOpen, user, pass }) {
 
             Notiflix.Notify.failure(failMessage);
             console.error('Registration error:', error);
+            return;
         }
     };
 

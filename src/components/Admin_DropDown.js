@@ -1,16 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import ChangeRoleModal from "./ChangeRoleModal"; // Import the Change Role modal
 
-export default function Dropdown({ open, setOpen, buttonRef, deleteMessages, selectedMessages, isDeleteMode, handleMessageSelect, handleDeleteModeToggle, serverId, users }) {
+export default function Dropdown({ open, setOpen, buttonRef, deleteMessages, selectedMessages, isDeleteMode, handleMessageSelect, handleDeleteModeToggle, serverId, openChangeRole }) {
   const dropdownRef = useRef(null);
-  console.log("Users in dropdown:", users);
+  //console.log("Users in dropdown:", users);
 
   // State to manage Change Role modal
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  //const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  //const [selectedUser, setSelectedUser] = useState(null);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  
   useEffect(() => {
     if (open && buttonRef.current && dropdownRef.current) {
       const buttonRect = buttonRef.current.getBoundingClientRect();
@@ -19,12 +20,14 @@ export default function Dropdown({ open, setOpen, buttonRef, deleteMessages, sel
   }, [open, buttonRef]);
 
   // Handle actions inside the dropdown
-  const handleActionClick = (input, user = null) => {
+  const handleActionClick = (input) => {
     if (input === "deleteMessages") {
       handleDeleteModeToggle();
-    } else if (input === "changeRole" && user) {
-      setSelectedUser(user); // Store selected user
-      setIsRoleModalOpen(true); // Open the modal
+    } else if (input === "changeRole") {
+      openChangeRole();
+      setOpen(false);
+      //setSelectedUser(user); // Store selected user
+      //setIsRoleModalOpen(true); // Open the modal
     }
   };
 
@@ -57,25 +60,17 @@ export default function Dropdown({ open, setOpen, buttonRef, deleteMessages, sel
 
           {!isDeleteMode ? (
             <div className="flex flex-col space-y-2">
+
               {/* Dropdown for selecting a user and changing role */}
-              {users && users.length > 0 ? (
-                users.map((user) => (
-                  <button
-                    key={user.id}
-                    onClick={() => handleActionClick("changeRole", user)}
-                    className="w-full text-left text-sm text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100"
-                  >
-                    Change Role - {user.username}
-                  </button>
-                ))
-              ) : (
+              
                 <button
-                  onClick={() => console.log("Forced Change Role Button Clicked")}
+                  onClick={() => handleActionClick("changeRole")}
                   className="w-full text-left text-sm text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100"
                 >
-                  Change Role (Debug)
+                  Change Role
                 </button>
-              )}
+
+
               <button
                 onClick={() => handleDeleteModeToggle()}
                 className="w-full text-left text-sm text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100"
@@ -111,7 +106,7 @@ export default function Dropdown({ open, setOpen, buttonRef, deleteMessages, sel
       )}
 
       {/* Change Role Modal */}
-      {selectedUser && (
+      {/* {selectedUser && (
         <ChangeRoleModal
           open={isRoleModalOpen}
           setOpen={setIsRoleModalOpen}
@@ -121,7 +116,10 @@ export default function Dropdown({ open, setOpen, buttonRef, deleteMessages, sel
             // Handle updating the user's role in UI (if needed)
           }}
         />
-      )}
+      )} */}
+
+
+
     </>
   );
 }

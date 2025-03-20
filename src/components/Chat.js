@@ -13,7 +13,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
 
-export default function Chat({ messages, selectedServer, isAdmin, openAddUser, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle }) {
+export default function Chat({ messages, selectedServer, isAdmin, openAddUser, openChangeRole, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle, getUpdatedRoles, serverMode }) {
   
   const [newMessage, setNewMessage] = useState('');
   const [open, setOpen] = useState(false);
@@ -58,7 +58,11 @@ export default function Chat({ messages, selectedServer, isAdmin, openAddUser, s
 
   const sendMessage = async () => {
     try {
-      const response = await axios.post(`${API_URL}/servers/messages`,
+      const destinationRef = serverMode
+        ? `${API_URL}/servers/messages`
+        : `${API_URL}/dms/messages`
+        
+      const response = await axios.post(destinationRef,
         {
         text: newMessage,
         serverId: selectedServer.id,
@@ -117,6 +121,8 @@ return (
               buttonRef={buttonRef}
               selectedMessages = {selectedMessages}
               handleMessageSelect = {handleMessageSelect}
+              openChangeRole={openChangeRole}
+              getUpdatedRoles={getUpdatedRoles}
               />
         {selectedAction && <p>Selected Action: {selectedAction}</p>}
 
@@ -124,26 +130,48 @@ return (
         )}
       </div>
 
+ 
       {/* Messages Display */}
-      <div className="flex-1 z-10 overflow-y-auto space-y-2 ">
-        {messages.map((msg) => (
-          
-          <div 
-            key={msg.id} 
-            onClick={() => {
+      <div className="flex-1 z-10 overflow-y-auto space-y-2">
+        {messages.map((msg) => {
+          // Format the timestamp using JS Date
+          const dateObj = new Date(msg.timestamp);
+          const hours = String(dateObj.getHours()).padStart(2, '0');
+          const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+          const day = String(dateObj.getDate()).padStart(2, '0');
+          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const year = String(dateObj.getFullYear()).slice(-2);
+          const formattedTimestamp = `${hours}:${minutes} ${day}/${month}/${year}`;
 
-              if(isDeleteMode){handleMessageSelect(msg.id) }
-            }
-              
-            }
-            className={`p-2 px-3 rounded-xl max-w-fit ${
-              selectedMessages.includes(msg.id) ? "bg-red-200" : "bg-indigo-100"
-            }`}>
-            <span className="text-violet-800">{msg.username}: </span> 
-            <span className="text-indigo-700">{msg.text}</span>
-          </div>
-        ))}
+          return (
+            <div
+              key={msg.id}
+              onClick={() => {
+                if (isDeleteMode) {
+                  handleMessageSelect(msg.id);
+                }
+              }}
+              className={`p-2 px-3 rounded-xl max-w-fit ${
+                selectedMessages.includes(msg.id) ? "bg-red-200" : "bg-indigo-100"
+              }`}
+            >
+              {/* Username and message inline */}
+              <div>
+                <span className="text-violet-800 font-semibold">{msg.username}</span>
+                <span className="ml-2 text-indigo-700">{msg.text}</span>
+              </div>
+
+              {/* Timestamp below */}
+              <div className="text-xs text-gray-500">
+                {formattedTimestamp}
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+
+
 
       {/* Message Input */}
       <form

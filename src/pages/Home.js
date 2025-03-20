@@ -3,16 +3,21 @@ import './App.css'
 import Sidebar from '../components/Sidebar.js'
 import Chat from '../components/Chat.js'
 //import Details from '../components/details/Details.jsx'
-import Navbar from '../components/Navbar.js'
 import {jwtDecode} from 'jwt-decode';
+import { waitFor } from '@testing-library/react'
 
 // imports for front-end access to Firebase DB
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getDatabase, ref, get, onValue, off } from 'firebase/database';
+
+//import components
+import Navbar from '../components/Navbar.js'
 import CreateServerPopUp from '../components/CreateGroup';
-import AddUserPopUp from '../components/Add_user'
-import { waitFor } from '@testing-library/react'
+import CreateDM from '../components/CreateDM.js';
+import AddUserPopUp from '../components/Add_user';
+import ChangeRoleModal from '../components/ChangeRoleModal.js'
+
 
 
 
@@ -25,7 +30,9 @@ function Home() {
   const [selectedMessages, setSelectedMessages] = useState([]);//This array keeps track of selected messages to be deleted
   const [selectedServerUsers, setSelectedServerUsers] = useState(null);
   const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
+  const [openCreateDMDialog, setOpenCreateDMDialog] = useState(false);
   const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
+  const [openChangeRoleDialog, setOpenChangeRoleDialog] = useState(false);  
   const [isDeleteMode, setIsDeleteMode] = useState(false); //This keeps track of delete mode when admin deletes messages
   const [serverMode, setServerMode] = useState(true);
 
@@ -36,8 +43,8 @@ function Home() {
     setOpenCreateServerDialog(true);
   };
 
-  const clearSelectedMessages = () => {
-    setOpenCreateServerDialog(true);
+  const handleCreateDM = () => {
+    setOpenCreateDMDialog(true);
   };
 
   const handleDeleteModeToggle = () => {
@@ -45,9 +52,24 @@ function Home() {
   }; 
 
   const handleAddUser = () => {
-    
     setOpenAddUserDialog(true);
   };
+
+  const handleChangeRole = () => {
+    setOpenChangeRoleDialog(true);
+  };
+
+  const handleServerModeToggle = () => {
+    setServerMode((prev) => !prev);
+  }; 
+
+  const refreshServersAndDMs = () => {
+      if(serverMode === true){
+      getServers();}
+      else{
+      getDMs();
+      }
+    };
 
   
   const handleMessageSelect = (id) => {
@@ -85,9 +107,6 @@ function Home() {
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app)
 
-  useEffect(() => {
-    console.log("Toggled!", isDeleteMode);
-  }, [isDeleteMode]);
 
   //Fetch messages when a server is selected
   useEffect(() => {
@@ -103,6 +122,7 @@ function Home() {
 
   useEffect(() => {
     if (currentUser) {
+      //console.log("Server mode: ", serverMode);
       if(serverMode === true){
       getServers();}
       else{
@@ -110,16 +130,17 @@ function Home() {
       }
       getUsers();
     }
-  }, [currentUser]);
+  }, [currentUser, serverMode]);
 
 
-  function isAdmin() {
+
+  function isAdmin(user) {
     // If we haven't loaded the server users yet, or currentUser doesn't exist, default to false
-    if (!selectedServerUsers || !currentUser) return false;
+    if (!selectedServerUsers || !user) return false;
   
     // Try to find the currentUser in selectedServerUsers
     const found = selectedServerUsers.find(
-      (u) => u.username === currentUser
+      (u) => u.username === user
     );
   
     // Return true if found user's role is 'admin'
@@ -130,7 +151,9 @@ function Home() {
   // Function to fetch messages from Realtime DB
   function getMessagesForServer() {
     const db = getDatabase();
-    const messagesRef = ref(db, `servers/${selectedServer.id}/messages`);
+    const messagesRef = serverMode
+    ? ref(db, `servers/${selectedServer.id}/messages`)
+    : ref(db, `directmessages/${selectedServer.id}/messages`);
 
     // Turn off any old listener first, to avoid duplicates if selectedServer changes
     off(messagesRef);
@@ -143,6 +166,7 @@ function Home() {
         const loadedMessages = Object.entries(data).map(([key, msg]) => ({
           id: key,
           ...msg,
+          
         }));
         // Sort by timestamp ascending if you want chronological order
         loadedMessages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
@@ -151,27 +175,43 @@ function Home() {
         setMessages([]);
       }
     });
+    console.log(messages);
   }
 
 
-// Function to get the list of servers for the user
+
+  // Function to get the list of servers for the user
   function getServers() {
     const db = getDatabase();
-    const serversRef = ref(db, `users/${currentUser}/servers`);
-  
+    const serversRef = ref(db, `servers`);
+
     get(serversRef)
       .then((snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val(); // e.g., { 165: "Server Name A", 456: "Server Name B" }
+          const serverKeys = Object.keys(data);
           
-          // Convert to array of { id, name } objects
-          const serversArray = Object.entries(data).map(([id, name]) => ({ 
-            id, 
-            name 
-          }));
-          
+
+          // We'll store the servers the user belongs to in this array
+          const serversArray = [];
+
+          // Iterate through each server
+          serverKeys.forEach((serverId) => {
+            const serverData = data[serverId];
+
+            // Check if there's a 'users' property and if it includes the currentUserId
+            if (serverData.users && serverData.users[currentUser]) {
+              // Add server to the array
+              serversArray.push({
+                id: serverId,
+                name: serverData.name || 'Unnamed Server',
+                // add any other server info if needed
+              });
+            }
+          });
+
           setUserServers(serversArray);
-          console.log(serversArray);
+          console.log('Servers array:',serversArray);
         } else {
           setUserServers([]); // no servers yet
         }
@@ -181,109 +221,87 @@ function Home() {
       });
   }
 
-  function ServerUsersHelper(ServerID){
 
+
+  async function DmNameHelper(DmID) {
     const db = getDatabase();
-    const usersRef = ref(db, `servers/${ServerID}/users`);
-
-    return get(usersRef)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          let userCount = 0;
-          
-          snapshot.forEach(() => {
-              userCount+=1;
-            });
-            return userCount;
-          
-        }else{
-          return 0;
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching users for this server:', error);
-        return 0;
-      });
-
+    const usersRef = ref(db, `directmessages/${DmID}/users`);
+  
+    try {
+      const snapshot = await get(usersRef);
+      if (snapshot.exists()) {
+        let firstValidName = null;
+  
+        snapshot.forEach((childSnapshot) => {
+          const username = childSnapshot.key;
+          if (username !== currentUser) {
+            firstValidName = username;
+            // We don't break the forEach in Firebase snapshot iteration
+            // but once a name is found, it’s effectively the “first valid” one.
+          }
+        });
+  
+        // Return the first valid name or empty string
+        return firstValidName || '';
+      } else {
+        // No snapshot found
+        return '';
+      }
+    } catch (error) {
+      console.error('Error fetching users for this server:', error);
+      return '';
+    }
   }
-
-  function DMServerNameHelper(ServerID) {
-    const db = getDatabase();
-    const usersRef = ref(db, `servers/${ServerID}/users`);
-  
-    return get(usersRef)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          let firstValidName = null;
-  
-          snapshot.forEach((childSnapshot) => {
-            // Get the username from the key (like "csuciu" or "filip")
-            const username = childSnapshot.key;
-            //console.log("Username is ", username, ", Logged in user is ", currentUser);
-            
-            if (username !== currentUser) {
-              firstValidName = username;
-              return true; // Stop iteration once we find the first valid name
-            }
-          });
-  
-          return firstValidName || ""; // Return first valid name or empty string if none found
-        } else {
-          return ""; // Return empty string if no users are found
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching users for this server:', error);
-        return "";
-      });
-  }
-
 
 
   function getDMs() {
     const db = getDatabase();
-    const serversRef = ref(db, `users/${currentUser}/servers`);
+    const dmsRef = ref(db, 'directmessages');
   
-    get(serversRef)
+    get(dmsRef)
       .then((snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          const serverKeys = Object.keys(data);
-          const promises = [];
-  
-          // Create an array of promises
-          serverKeys.forEach((key) => {
-            const promise = ServerUsersHelper(key)
-              .then(memberCount => {
-                if (memberCount === 2) {
-                  return DMServerNameHelper(key)
-                    .then(tempname => {
-                      return { id: key, name: tempname || '' };
-                    });
-                }
-                return null;
-              });
-            promises.push(promise);
-          });
-  
-          // Wait for all promises to resolve
-          Promise.all(promises)
-            .then(results => {
-              // Filter out null values (servers that don't meet the memberCount === 2 condition)
-              const DMArray2 = results.filter(item => item !== null);
-              setUserServers(DMArray2);
-              console.log(DMArray2);
-            });
-        } else {
+        if (!snapshot.exists()) {
           setUserServers([]);
+          return;
         }
+        const data = snapshot.val();
+        const dmKeys = Object.keys(data);
+  
+        // We'll transform each dmId into a promise that resolves with the DM object
+        const dmPromises = dmKeys.map((dmId) => {
+          const dmData = data[dmId];
+  
+          // If the current user is part of this DM's users
+          if (dmData.users && dmData.users[currentUser]) {
+            // Call DmNameHelper, which returns a promise for the other user's name
+            return DmNameHelper(dmId).then((dmName) => {
+              return {
+                id: dmId,
+                name: dmName || 'Unnamed'
+              };
+            });
+          }
+          // If the user is not part of this DM, return null so we can filter it out
+          return null;
+        });
+  
+        // Resolve all DmNameHelper calls before updating your state/array
+        return Promise.all(dmPromises);
+      })
+      .then((dmEntries) => {
+        // Filter out null entries from DMs that don't include currentUser
+        const dmsArray = dmEntries.filter((item) => item !== null);
+  
+        // Now update your state or do what you need with the array
+        setUserServers(dmsArray);
+        console.log('DM array:', dmsArray);
       })
       .catch((error) => {
-        console.error('Error fetching servers:', error);
-        setUserServers([]);
+        console.error('Error fetching direct messages:', error);
       });
   }
   
+
 
   // Function to get the list of all users
   function getUsers() {
@@ -310,6 +328,8 @@ function Home() {
         setUserList([]);
       });
   }
+
+
 
   // Function to get the list of the members and admins of current selected server
   function getServerUsers() {
@@ -345,6 +365,8 @@ function Home() {
     <div className="flex flex-col min-h-screen">
       <Navbar 
       user = {currentUser}
+      serverMode = {serverMode}
+      toggleServerMode = {handleServerModeToggle}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -352,7 +374,7 @@ function Home() {
         <Sidebar 
         servers={userServers} 
         setSelectedServer={setSelectedServer}
-        openCreateServer={handleCreateServer}
+        openCreateServerOrDM={serverMode ? handleCreateServer : handleCreateDM} 
         selectedServer={selectedServer}
         className="w-64 min-w-32 flex-shrink-0" 
         />
@@ -362,11 +384,13 @@ function Home() {
             messages={messages}
             selectedServer={selectedServer}
             openAddUser={handleAddUser}
-            isAdmin={isAdmin()}  
+            openChangeRole={handleChangeRole}
+            isAdmin={isAdmin(currentUser)}  
             handleMessageSelect={handleMessageSelect}
             selectedMessages={selectedMessages}
             isDeleteMode = {isDeleteMode}
             handleDeleteModeToggle = {handleDeleteModeToggle}
+            serverMode = {serverMode}
 
             className="flex-1 overflow-auto"
             
@@ -381,8 +405,18 @@ function Home() {
               setOpen = {setOpenCreateServerDialog}
               currentUser={currentUser}
               userList = {userList}
+              refresh = {refreshServersAndDMs}
             />
       
+      <CreateDM
+              open={openCreateDMDialog}
+              setOpen = {setOpenCreateDMDialog}
+              currentUser={currentUser}
+              userList = {userList}
+              refresh = {refreshServersAndDMs}
+              currentDMs = {userServers}
+            />
+
       <AddUserPopUp
               open={openAddUserDialog}
               setOpen = {setOpenAddUserDialog}
@@ -390,6 +424,17 @@ function Home() {
               userList = {userList}
               serverUsers = {selectedServerUsers}
             />
+
+      <ChangeRoleModal
+              open={openChangeRoleDialog}
+              setOpen = {setOpenChangeRoleDialog}
+              serverId={selectedServer?.id || ""}
+              serverUsers = {selectedServerUsers}
+              getUpdatedRoles = {getServerUsers}
+            />
+
+
+
     </div>
   );
 

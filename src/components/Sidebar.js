@@ -3,7 +3,7 @@ import bubble1 from '../images/bubbles/1.png';
 import bubble2 from '../images/bubbles/2.png';
 import bubble3 from '../images/bubbles/3.png';
 
-export default function Sidebar({ servers, openCreateServer, setSelectedServer, selectedServer}) {
+export default function Sidebar({ servers, openCreateServerOrDM, setSelectedServer, selectedServer}) {
   const [search, setSearch] = useState('');
 
   // 1) Put bubble images in an array
@@ -37,7 +37,7 @@ export default function Sidebar({ servers, openCreateServer, setSelectedServer, 
         <div className="relative flex-1">
           <input
             type="text"
-            placeholder="Search servers..."
+            placeholder="Search..."
             className="w-full p-2 pl-4 pr-10 bg-white rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -63,7 +63,7 @@ export default function Sidebar({ servers, openCreateServer, setSelectedServer, 
 
         {/* Create Server Icon */}
         <button
-            onClick={openCreateServer}
+            onClick={openCreateServerOrDM}
             className='text-violet-800 hover:scale-110'
         >
           <svg
@@ -109,7 +109,7 @@ export default function Sidebar({ servers, openCreateServer, setSelectedServer, 
             ))}
           </ul>
         ) : (
-          <p className="text-gray-500 text-sm">No servers found</p>
+          <p className="text-gray-500 text-sm">Nothing found</p>
         )}
       </div>
     </div>

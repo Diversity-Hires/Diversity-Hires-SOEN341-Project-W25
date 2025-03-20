@@ -9,7 +9,7 @@
     "@realfavicongenerator/generate-favicon": "^0.4.6",
     "@realfavicongenerator/image-adapter-node": "^0.4.6",
     "@testing-library/jest-dom": "^5.16.1",
-    "@testing-library/react": "^12.1.2",
+    "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^13.5.0",
     "aos": "^3.0.0-beta.6",
     "axios": "^1.7.7",
@@ -25,6 +25,7 @@
     "headlessui": "^0.0.0",
     "helmet": "^8.0.0",
     "i18next": "^23.2.3",
+    "jest": "^27.5.1",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "mysql": "^2.18.1",
@@ -67,9 +68,16 @@
       "last 1 safari version"
     ]
   },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!(axios|notiflix)/)"
+    ]
+  },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "autoprefixer": "^10.4.0",
+    "babel-jest": "^29.7.0",
+    "identity-obj-proxy": "^3.0.0",
     "postcss": "^8.4.5",
     "tailwindcss": "^3.4.16",
     "typescript": "^3.9.10"
