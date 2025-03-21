@@ -8,6 +8,8 @@ import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuIt
 import Bubbles from '../animations/Bubbles'
 import axios from "axios";
 import Notiflix from "notiflix";
+import UserStatusIndicator from './UserStatusIndicator';
+
 
 const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
@@ -120,9 +122,12 @@ return (
       <div className='flex justify-between border-b border-blue-900/30 pb-2 mb-4'>
 
         {/* Server name & action buttons in one flex row */}
-        <div className="relative z-20 flex items-center ">
-        
-          <h2 className="text-2xl">{selectedServer.name}</h2>
+        <div className="relative z-20 flex items-center">
+
+          <h2 className="text-2xl flex items-center">
+            {!serverMode && <UserStatusIndicator username={selectedServer.name} />}
+            {selectedServer.name}
+          </h2>
 
           {/* Action buttons (only if isAdmin is true) */}
           {isAdmin && (
