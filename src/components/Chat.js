@@ -93,7 +93,7 @@ return (
       {/* Server name & action buttons in one flex row */}
       <div className="relative z-20 flex items-center border-b border-blue-900/30 pb-2 mb-4">
       <h2 className="text-2xl flex items-center">
-  <UserStatusIndicator username={selectedServer.name} />
+  {!serverMode && <UserStatusIndicator username={selectedServer.name} />}
   {selectedServer.name}
 </h2>
 

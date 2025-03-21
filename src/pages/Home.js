@@ -381,6 +381,7 @@ function Home() {
       <div className="flex flex-1 overflow-hidden">
 
         <Sidebar 
+        serverMode={serverMode}
         servers={userServers} 
         setSelectedServer={setSelectedServer}
         openCreateServerOrDM={serverMode ? handleCreateServer : handleCreateDM} 
