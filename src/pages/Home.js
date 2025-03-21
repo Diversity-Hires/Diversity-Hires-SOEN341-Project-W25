@@ -18,6 +18,7 @@ import CreateDM from '../components/CreateDM.js';
 import AddUserPopUp from '../components/Add_user';
 import RemoveUser from '../components/Remove_user';
 import ChangeRoleModal from '../components/ChangeRoleModal.js'
+import { setUserOnline } from '../presence.js';
 
 
 
@@ -38,8 +39,16 @@ function Home() {
   const [isDeleteMode, setIsDeleteMode] = useState(false); //This keeps track of delete mode when admin deletes messages
   const [serverMode, setServerMode] = useState(true);
 
+
+  // Get the current user from the token
   const token = localStorage.getItem('token');
   const currentUser = jwtDecode(token).id || '';
+// Set the Status of the suer to online
+  useEffect(() => {
+    if (currentUser) {
+      setUserOnline(currentUser);
+    }
+  }, [currentUser]);
 
   const handleCreateServer = () => {
     setOpenCreateServerDialog(true);
@@ -378,6 +387,7 @@ function Home() {
       <div className="flex flex-1 overflow-hidden">
 
         <Sidebar 
+        serverMode={serverMode}
         servers={userServers} 
         setSelectedServer={setSelectedServer}
         openCreateServerOrDM={serverMode ? handleCreateServer : handleCreateDM} 
@@ -398,7 +408,8 @@ function Home() {
             isDeleteMode = {isDeleteMode}
             handleDeleteModeToggle = {handleDeleteModeToggle}
             serverMode = {serverMode}
-
+            currentUser = {currentUser}
+            refresh = {refreshServersAndDMs}
             className="flex-1 overflow-auto"
             
           />
