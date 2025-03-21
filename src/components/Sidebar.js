@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import bubble1 from '../images/bubbles/1.png';
 import bubble2 from '../images/bubbles/2.png';
 import bubble3 from '../images/bubbles/3.png';
+import UserStatusIndicator from './UserStatusIndicator';
 
 export default function Sidebar({ servers, openCreateServerOrDM, setSelectedServer, selectedServer}) {
   const [search, setSearch] = useState('');
@@ -102,7 +103,7 @@ export default function Sidebar({ servers, openCreateServerOrDM, setSelectedServ
                 />
                 {/* Server name overlay */}
                 <span className={`absolute top-1/2 left-1/2 w-full text-center transform -translate-x-1/2 -translate-y-1/2 text-xl text-violet-800 pointer-events-none ${selectedServer?.id === server.id ? 'underline' : ''}`}>
-                  
+                  <UserStatusIndicator username={server.name} />
                   {server.name}
                 </span>
               </li>
