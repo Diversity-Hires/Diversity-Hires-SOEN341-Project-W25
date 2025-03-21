@@ -58,7 +58,7 @@ function Home() {
   };
 
   const handleRemoveUser = () => {
-    setOpenRemoveUserDialog(true); // ✅ Opens the Remove User modal
+    setOpenRemoveUserDialog(true); 
 };
 
   const handleChangeRole = () => {

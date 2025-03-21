@@ -11,18 +11,16 @@ const API_KEY = process.env.REACT_APP_API_KEY;
 
 export default function RemoveUser({ open, setOpen, serverId, userList, serverUsers, updateUserList }) {
   const [selectedUser, setSelectedUser] = useState("");
-  const [displayUsers, setDisplayUsers] = useState([]); // ✅ Stores users in the dropdown
+  const [displayUsers, setDisplayUsers] = useState([]); 
 
   const token = localStorage.getItem("token");
 
-  // ✅ Use the same logic as Add_user.js but show only users in the server
   useEffect(() => {
     if (!serverUsers || serverUsers.length === 0) {
-        setDisplayUsers([]); // Ensure no undefined errors occur
+        setDisplayUsers([]); 
         return;
     }
 
-    // ✅ Fix: Only show users who are inside the server
     setDisplayUsers(serverUsers.map(user => user.username));
 
 }, [serverUsers]);
@@ -36,7 +34,6 @@ export default function RemoveUser({ open, setOpen, serverId, userList, serverUs
         return;
     }
 
-    // ✅ Ensure we're sending the exact username format expected by the backend
     const userToRemove = serverUsers.find(user => user.username === selectedUser);
 
     if (!userToRemove) {
@@ -55,7 +52,7 @@ export default function RemoveUser({ open, setOpen, serverId, userList, serverUs
                 },
                 data: {
                     serverId: serverId,
-                    username: userToRemove.username, // ✅ Make sure it's correctly passed
+                    username: userToRemove.username, 
                 },
             }
         );
@@ -137,7 +134,6 @@ export default function RemoveUser({ open, setOpen, serverId, userList, serverUs
                             {/* Default option */}
                             <option value="" disabled>-- Select a user --</option>
 
-                            {/* ✅ Use displayUsers just like in Add_user.js */}
                             {displayUsers.map((user, index) => (
                               <option key={index} value={user}>
                                 {user}

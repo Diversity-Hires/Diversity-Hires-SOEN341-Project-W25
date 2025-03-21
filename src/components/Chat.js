@@ -104,7 +104,7 @@ return (
 
 
             <button 
-                onClick={openRemoveUser}  // ✅ Now correctly calls the function
+                onClick={openRemoveUser}  
                 className="cursor-pointer hover:text-red-500"
             >
                 <UserMinusIcon className="h-6 w-6" />
@@ -136,7 +136,6 @@ return (
       </div>
 
  
-      {/* Messages Display */}
       <div className="flex-1 z-10 overflow-y-auto space-y-2">
         {messages.map((msg) => {
           // Format the timestamp using JS Date
