@@ -9,56 +9,65 @@ import Notiflix from "notiflix";
 const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
-export default function RemoveUser({ open, setOpen, serverId, serverUsers, userList, updateUserList }) {
+export default function RemoveUser({ open, setOpen, serverId, userList, serverUsers, updateUserList }) {
   const [selectedUser, setSelectedUser] = useState("");
-  const [displayUsers, setDisplayUsers] = useState([]); // ✅ Same as AddUser.js
+  const [displayUsers, setDisplayUsers] = useState([]); // ✅ Stores users in the dropdown
 
   const token = localStorage.getItem("token");
 
+  // ✅ Use the same logic as Add_user.js but show only users in the server
   useEffect(() => {
-    if (!userList || !serverUsers) return; // Prevent running if undefined
-    
-    // ✅ Copy AddUser.js logic: Filter users who are in the server
-    const tempUsers = userList.filter((u) => 
-      (serverUsers ?? []).some((srvUser) => srvUser.username === u)
-    );
+    if (!serverUsers || serverUsers.length === 0) {
+        setDisplayUsers([]); // Ensure no undefined errors occur
+        return;
+    }
 
-    setDisplayUsers(tempUsers); // ✅ Store filtered users separately
-  }, [userList, serverUsers]); 
+    // ✅ Fix: Only show users who are inside the server
+    setDisplayUsers(serverUsers.map(user => user.username));
+
+}, [serverUsers]);
 
   // Handle user removal
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!selectedUser) {
-      Notiflix.Notify.warning("Please select a user to remove.");
-      return;
+        Notiflix.Notify.warning("Please select a user to remove.");
+        return;
+    }
+
+    // ✅ Ensure we're sending the exact username format expected by the backend
+    const userToRemove = serverUsers.find(user => user.username === selectedUser);
+
+    if (!userToRemove) {
+        Notiflix.Notify.failure("User not found in server list.");
+        return;
     }
 
     try {
-      await axios.delete(
-        `${API_URL}/servers/remove-user`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "x-api-key": API_KEY,
-          },
-          data: {
-            serverId: serverId,
-            username: selectedUser,
-          },
-        }
-      );
+        await axios.delete(
+            `${API_URL}/servers/remove-user`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                    "x-api-key": API_KEY,
+                },
+                data: {
+                    serverId: serverId,
+                    username: userToRemove.username, // ✅ Make sure it's correctly passed
+                },
+            }
+        );
 
-      Notiflix.Notify.success("User removed successfully!");
-      updateUserList(selectedUser);
-      setOpen(false);
+        Notiflix.Notify.success("User removed successfully!");
+        updateUserList(selectedUser);
+        setOpen(false);
     } catch (error) {
-      Notiflix.Notify.failure(error.response?.data?.message || "Failed to remove user.");
-      console.error("User removal error:", error);
+        Notiflix.Notify.failure(error.response?.data?.message || "Failed to remove user.");
+        console.error("User removal error:", error);
     }
-  };
+};
 
   return (
     <Transition show={open} as={Fragment}>
@@ -95,6 +104,7 @@ export default function RemoveUser({ open, setOpen, serverId, serverUsers, userL
                   onClick={() => setOpen(false)}
                   className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
                 >
+                  <span className="sr-only">Close</span>
                   <XMarkIcon className="h-5 w-5" />
                 </button>
 
@@ -127,7 +137,7 @@ export default function RemoveUser({ open, setOpen, serverId, serverUsers, userL
                             {/* Default option */}
                             <option value="" disabled>-- Select a user --</option>
 
-                            {/* ✅ Copying AddUser logic: Use filtered `displayUsers` */}
+                            {/* ✅ Use displayUsers just like in Add_user.js */}
                             {displayUsers.map((user, index) => (
                               <option key={index} value={user}>
                                 {user}

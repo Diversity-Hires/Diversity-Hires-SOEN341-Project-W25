@@ -13,7 +13,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
 
-export default function Chat({ messages, selectedServer, isAdmin, openAddUser, openChangeRole, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle, getUpdatedRoles, serverMode }) {
+export default function Chat({ messages, selectedServer, isAdmin, openAddUser,openRemoveUser, openChangeRole, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle, getUpdatedRoles, serverMode }) {
   
   const [newMessage, setNewMessage] = useState('');
   const [open, setOpen] = useState(false);
@@ -102,9 +102,14 @@ return (
                 <UserPlusIcon className="h-6 w-6" />
             </button>
 
-            <button className="cursor-pointer hover:text-blue-500">
-            <UserMinusIcon className="h-6 w-6 cursor-pointer hover:text-blue-500" />
+
+            <button 
+                onClick={openRemoveUser}  // ✅ Now correctly calls the function
+                className="cursor-pointer hover:text-red-500"
+            >
+                <UserMinusIcon className="h-6 w-6" />
             </button>
+
 
             <button
             ref={buttonRef}
