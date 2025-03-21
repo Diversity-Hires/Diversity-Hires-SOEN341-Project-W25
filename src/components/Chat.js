@@ -15,7 +15,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
 
-export default function Chat({ messages, selectedServer, isAdmin, openAddUser, openChangeRole, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle, getUpdatedRoles, serverMode, currentUser, refresh }) {
+export default function Chat({ messages, selectedServer, isAdmin, openAddUser, openRemoveUser, openChangeRole, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle, getUpdatedRoles, serverMode, currentUser, refresh }) {
   
   const [newMessage, setNewMessage] = useState('');
   const [open, setOpen] = useState(false);
@@ -120,7 +120,7 @@ return (
        <Bubbles className="z-10"/>
 
       <div className='flex justify-between border-b border-blue-900/30 pb-2 mb-4'>
-
+                
         {/* Server name & action buttons in one flex row */}
         <div className="relative z-20 flex items-center">
 
@@ -139,8 +139,11 @@ return (
                   <UserPlusIcon className="h-6 w-6" />
               </button>
 
-              <button className="cursor-pointer hover:text-blue-500">
-              <UserMinusIcon className="h-6 w-6 cursor-pointer hover:text-blue-500" />
+              <button 
+                  onClick={openRemoveUser}
+                  className="cursor-pointer hover:text-blue-500"
+              >
+                <UserMinusIcon className="h-6 w-6 cursor-pointer hover:text-blue-500"/>
               </button>
 
               <button
@@ -187,11 +190,11 @@ return (
           >
             <ArrowRightStartOnRectangleIcon className="h-6 w-6 mr-2"/>
           </button>
-        )}
+
+      )}
 
       </div>
  
-      {/* Messages Display */}
       <div className="flex-1 z-10 overflow-y-auto space-y-2">
         {messages.map((msg) => {
           // Format the timestamp using JS Date

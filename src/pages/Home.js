@@ -16,6 +16,7 @@ import Navbar from '../components/Navbar.js'
 import CreateServerPopUp from '../components/CreateGroup';
 import CreateDM from '../components/CreateDM.js';
 import AddUserPopUp from '../components/Add_user';
+import RemoveUser from '../components/Remove_user';
 import ChangeRoleModal from '../components/ChangeRoleModal.js'
 import { setUserOnline } from '../presence.js';
 
@@ -33,6 +34,7 @@ function Home() {
   const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
   const [openCreateDMDialog, setOpenCreateDMDialog] = useState(false);
   const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
+  const [openRemoveUserDialog, setOpenRemoveUserDialog] = useState(false);
   const [openChangeRoleDialog, setOpenChangeRoleDialog] = useState(false);  
   const [isDeleteMode, setIsDeleteMode] = useState(false); //This keeps track of delete mode when admin deletes messages
   const [serverMode, setServerMode] = useState(true);
@@ -63,6 +65,10 @@ function Home() {
   const handleAddUser = () => {
     setOpenAddUserDialog(true);
   };
+
+  const handleRemoveUser = () => {
+    setOpenRemoveUserDialog(true); 
+};
 
   const handleChangeRole = () => {
     setOpenChangeRoleDialog(true);
@@ -394,6 +400,7 @@ function Home() {
             messages={messages}
             selectedServer={selectedServer}
             openAddUser={handleAddUser}
+            openRemoveUser={handleRemoveUser}
             openChangeRole={handleChangeRole}
             isAdmin={isAdmin(currentUser)}  
             handleMessageSelect={handleMessageSelect}
@@ -435,6 +442,13 @@ function Home() {
               userList = {userList}
               serverUsers = {selectedServerUsers}
             />
+
+      <RemoveUser
+          open={openRemoveUserDialog}
+          setOpen={setOpenRemoveUserDialog}
+          serverId={selectedServer?.id || ""}
+          serverUsers={selectedServerUsers} 
+      />
 
       <ChangeRoleModal
               open={openChangeRoleDialog}
