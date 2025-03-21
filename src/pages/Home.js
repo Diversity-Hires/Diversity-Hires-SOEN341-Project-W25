@@ -391,7 +391,8 @@ function Home() {
             isDeleteMode = {isDeleteMode}
             handleDeleteModeToggle = {handleDeleteModeToggle}
             serverMode = {serverMode}
-
+            currentUser = {currentUser}
+            refresh = {refreshServersAndDMs}
             className="flex-1 overflow-auto"
             
           />
