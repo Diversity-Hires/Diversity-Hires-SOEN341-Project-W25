@@ -28,43 +28,45 @@ export default function RemoveUser({ open, setOpen, serverId, userList, serverUs
   // Handle user removal
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+  
     if (!selectedUser) {
-        Notiflix.Notify.warning("Please select a user to remove.");
-        return;
+      Notiflix.Notify.warning("Please select a user to remove.");
+      return;
     }
-
+  
     const userToRemove = serverUsers.find(user => user.username === selectedUser);
-
+  
     if (!userToRemove) {
-        Notiflix.Notify.failure("User not found in server list.");
-        return;
+      Notiflix.Notify.failure("User not found in server list.");
+      return;
     }
-
+  
     try {
-        await axios.delete(
-            `${API_URL}/servers/remove-user`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                    "x-api-key": API_KEY,
-                },
-                data: {
-                    serverId: serverId,
-                    username: userToRemove.username, 
-                },
-            }
-        );
-
-        Notiflix.Notify.success("User removed successfully!");
+      await axios.delete(`${API_URL}/servers/remove-user`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "x-api-key": API_KEY,
+        },
+        data: {
+          serverId: serverId,
+          username: selectedUser,
+        },
+      });
+    
+      if (typeof updateUserList === 'function') {
         updateUserList(selectedUser);
-        setOpen(false);
+      }
+    
+      setOpen(false);
+      Notiflix.Notify.success("User removed successfully!");
     } catch (error) {
-        Notiflix.Notify.failure(error.response?.data?.message || "Failed to remove user.");
-        console.error("User removal error:", error);
+      console.error("User removal error:", error);
+      Notiflix.Notify.failure(
+        error.response?.data?.message || "Failed to remove user."
+      );
     }
-};
+  };
 
   return (
     <Transition show={open} as={Fragment}>
