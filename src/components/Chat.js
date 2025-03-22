@@ -3,17 +3,19 @@ import Dropdown from './Admin_DropDown';
 import p5 from 'p5';
 // import { db } from '../firebase'; // Firebase config
 // import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { UserPlusIcon, UserMinusIcon, Cog6ToothIcon} from '@heroicons/react/24/outline'
+import { UserPlusIcon, UserMinusIcon, Cog6ToothIcon, ArrowRightStartOnRectangleIcon} from '@heroicons/react/24/outline'
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import Bubbles from '../animations/Bubbles'
 import axios from "axios";
 import Notiflix from "notiflix";
+import UserStatusIndicator from './UserStatusIndicator';
+
 
 const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
 
-export default function Chat({ messages, selectedServer, isAdmin, openAddUser,openRemoveUser, openChangeRole, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle, getUpdatedRoles, serverMode }) {
+export default function Chat({ messages, selectedServer, isAdmin, openAddUser, openRemoveUser, openChangeRole, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle, getUpdatedRoles, serverMode, currentUser, refresh }) {
   
   const [newMessage, setNewMessage] = useState('');
   const [open, setOpen] = useState(false);
@@ -26,6 +28,11 @@ export default function Chat({ messages, selectedServer, isAdmin, openAddUser,op
     console.log(selectedMessages);
     //console.log(isDeleteMode)
   }, [selectedMessages]);
+
+
+  if (!selectedServer) {
+    return <div className="flex-1 flex items-center justify-center bg-gradient-to-t from-cyan-200 via-emerald-100 to-teal-50 text-indigo-800 ">Select a server to start chatting</div>;
+  }
 
 
   const deleteMessages = async () => {
@@ -52,10 +59,6 @@ export default function Chat({ messages, selectedServer, isAdmin, openAddUser,op
     }
   };
 
-  if (!selectedServer) {
-    return <div className="flex-1 flex items-center justify-center bg-gradient-to-t from-cyan-200 via-emerald-100 to-teal-50 text-indigo-800 ">Select a server to start chatting</div>;
-  }
-
   const sendMessage = async () => {
     try {
       const destinationRef = serverMode
@@ -81,6 +84,34 @@ export default function Chat({ messages, selectedServer, isAdmin, openAddUser,op
   };
 
 
+  const removeUser = async (user) => {
+    try {
+
+      const res = await axios.delete(`${API_URL}/servers/remove-user`, {
+        // All config goes here
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY
+        },
+        data: {
+          "serverId": selectedServer.id,
+          "username": user
+        }
+      });
+  
+      Notiflix.Notify.success('User exited server successfully');
+      refresh();
+    } catch (error) {
+      Notiflix.Notify.failure(
+        error.response?.data?.message || 'Failed to remove user.'
+      );
+      console.error('User removal error:', error);
+    }
+  };
+
+
+
 return (
   
     <div className="relative flex flex-col h-[calc(100vh-5rem)] p-4 bg-gradient-to-t from-cyan-200 via-emerald-100 to-teal-50 text-indigo-700  overflow-hidden">
@@ -88,53 +119,81 @@ return (
        {/* Particle Background */}
        <Bubbles className="z-10"/>
 
-      {/* Server name & action buttons in one flex row */}
-      <div className="relative z-20 flex items-center border-b border-blue-900/30 pb-2 mb-4">
-        <h2 className="text-2xl">{selectedServer.name}</h2>
+      <div className='flex justify-between border-b border-blue-900/30 pb-2 mb-4'>
+                
+        {/* Server name & action buttons in one flex row */}
+        <div className="relative z-20 flex items-center">
 
-        {/* Action buttons (only if isAdmin is true) */}
-        {isAdmin && (
-          <div className="flex items-center space-x-4 ml-2 border-l border-blue-900/30 pl-2">
-            <button 
-                onClick={openAddUser} 
-                className="cursor-pointer hover:text-blue-500"
-            >
-                <UserPlusIcon className="h-6 w-6" />
-            </button>
+          <h2 className="text-2xl flex items-center">
+            {!serverMode && <UserStatusIndicator username={selectedServer.name} />}
+            {selectedServer.name}
+          </h2>
 
+          {/* Action buttons (only if isAdmin is true) */}
+          {isAdmin && (
+            <div className="flex items-center space-x-4 ml-2 border-l border-blue-900/30 pl-2">
+              <button 
+                  onClick={openAddUser} 
+                  className="cursor-pointer hover:text-blue-500"
+              >
+                  <UserPlusIcon className="h-6 w-6" />
+              </button>
 
-            <button 
-                onClick={openRemoveUser}  
-                className="cursor-pointer hover:text-red-500"
-            >
-                <UserMinusIcon className="h-6 w-6" />
-            </button>
+              <button 
+                  onClick={openRemoveUser}
+                  className="cursor-pointer hover:text-blue-500"
+              >
+                <UserMinusIcon className="h-6 w-6 cursor-pointer hover:text-blue-500"/>
+              </button>
 
+              <button
+              ref={buttonRef}
+              onClick={() => setOpen(!open)}>
+                
+              <Cog6ToothIcon className="h-6 w-6 cursor-pointer hover:text-blue-500" />
+              </button>
+              <Dropdown
+                open={open}
+                setOpen={setOpen}
+                deleteMessages={deleteMessages}
+                isDeleteMode = {isDeleteMode}
+                handleDeleteModeToggle = {handleDeleteModeToggle}
+                buttonRef={buttonRef}
+                selectedMessages = {selectedMessages}
+                handleMessageSelect = {handleMessageSelect}
+                openChangeRole={openChangeRole}
+                getUpdatedRoles={getUpdatedRoles}
+                />
+          {selectedAction && <p>Selected Action: {selectedAction}</p>}
 
-            <button
-            ref={buttonRef}
-            onClick={() => setOpen(!open)}>
-              
-            <Cog6ToothIcon className="h-6 w-6 cursor-pointer hover:text-blue-500" />
-            </button>
-            <Dropdown
-              open={open}
-              setOpen={setOpen}
-              deleteMessages={deleteMessages}
-              isDeleteMode = {isDeleteMode}
-              handleDeleteModeToggle = {handleDeleteModeToggle}
-              buttonRef={buttonRef}
-              selectedMessages = {selectedMessages}
-              handleMessageSelect = {handleMessageSelect}
-              openChangeRole={openChangeRole}
-              getUpdatedRoles={getUpdatedRoles}
-              />
-        {selectedAction && <p>Selected Action: {selectedAction}</p>}
+            </div>
+          )}
+        </div>
 
-          </div>
-        )}
+        {/* Only allow users to exit chat if in Server Mode */}
+        {serverMode && (
+          <button
+            className="cursor-pointer hover:text-blue-500"
+            onClick={() =>
+              Notiflix.Confirm.show(
+                'Please Confirm',
+                `Are you sure you want to leave ${selectedServer.name}?`,
+                'Yes',
+                'No',
+                function okCb() {
+                  removeUser(currentUser);
+                },
+                function cancelCb() {
+                  
+                }
+              )}
+          >
+            <ArrowRightStartOnRectangleIcon className="h-6 w-6 mr-2"/>
+          </button>
+
+      )}
+
       </div>
-
  
       <div className="flex-1 z-10 overflow-y-auto space-y-2">
         {messages.map((msg) => {
@@ -204,7 +263,4 @@ return (
   );
 
 }
-
-
-
 

@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import bubble1 from '../images/bubbles/1.png';
 import bubble2 from '../images/bubbles/2.png';
 import bubble3 from '../images/bubbles/3.png';
+import UserStatusIndicator from './UserStatusIndicator';
 
-export default function Sidebar({ servers, openCreateServerOrDM, setSelectedServer, selectedServer}) {
+
+
+export default function Sidebar({ servers, openCreateServerOrDM, setSelectedServer, selectedServer,serverMode}) {
   const [search, setSearch] = useState('');
+  
 
   // 1) Put bubble images in an array
   const bubbleImages = [bubble1, bubble2, bubble3];
@@ -101,10 +105,15 @@ export default function Sidebar({ servers, openCreateServerOrDM, setSelectedServ
                   className="w-54 h-16 transition-transform duration-200 group-hover:scale-110"
                 />
                 {/* Server name overlay */}
-                <span className={`absolute top-1/2 left-1/2 w-full text-center transform -translate-x-1/2 -translate-y-1/2 text-xl text-violet-800 pointer-events-none ${selectedServer?.id === server.id ? 'underline' : ''}`}>
-                  
-                  {server.name}
-                </span>
+                <span
+  className={`absolute top-1/2 left-1/2 w-full text-center transform -translate-x-1/2 -translate-y-1/2 text-xl text-violet-800 pointer-events-none ${
+    selectedServer?.id === server.id ? 'underline' : ''
+  }`}
+>
+  {/* Only show presence if NOT in server mode */}
+  {!serverMode && <UserStatusIndicator username={server.name} />}
+  {server.name}
+</span>
               </li>
             ))}
           </ul>
