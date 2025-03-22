@@ -441,6 +441,7 @@ function Home() {
               serverId={selectedServer?.id || ""}
               userList = {userList}
               serverUsers = {selectedServerUsers}
+              updateUserList={getServerUsers}
             />
 
       <RemoveUser
