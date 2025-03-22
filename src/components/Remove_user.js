@@ -54,7 +54,6 @@ export default function RemoveUser({ open, setOpen, serverId, userList, serverUs
         },
       });
     
-      // ✅ Only call updateUserList if it exists
       if (typeof updateUserList === 'function') {
         updateUserList(selectedUser);
       }

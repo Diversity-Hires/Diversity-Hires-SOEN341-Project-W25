@@ -18,7 +18,7 @@ import CreateDM from '../components/CreateDM.js';
 import AddUserPopUp from '../components/Add_user';
 import RemoveUser from '../components/Remove_user';
 import ChangeRoleModal from '../components/ChangeRoleModal.js'
-import { setUserOnline } from '../presence.js';
+import { setUserOnline } from '../presence.js'; 
 
 
 
@@ -448,7 +448,7 @@ function Home() {
         setOpen={setOpenRemoveUserDialog}
         serverId={selectedServer?.id || ""}
         serverUsers={selectedServerUsers}
-        updateUserList={getServerUsers} // ✅ Pass function that updates the list
+        updateUserList={getServerUsers}
       />
 
       <ChangeRoleModal
