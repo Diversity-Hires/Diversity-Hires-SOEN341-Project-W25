@@ -433,10 +433,11 @@ function Home() {
             />
 
       <RemoveUser
-          open={openRemoveUserDialog}
-          setOpen={setOpenRemoveUserDialog}
-          serverId={selectedServer?.id || ""}
-          serverUsers={selectedServerUsers} 
+        open={openRemoveUserDialog}
+        setOpen={setOpenRemoveUserDialog}
+        serverId={selectedServer?.id || ""}
+        serverUsers={selectedServerUsers}
+        updateUserList={getServerUsers} // ✅ Pass function that updates the list
       />
 
       <ChangeRoleModal
