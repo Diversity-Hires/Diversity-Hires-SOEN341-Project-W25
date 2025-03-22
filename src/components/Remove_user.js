@@ -4,12 +4,12 @@ import { Fragment } from "react";
 import axios from "axios";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import Notiflix from "notiflix";
+import { jwtDecode } from "jwt-decode";
 
-// Assume you have your API_URL and API_KEY somewhere (env or config)
 const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
-export default function RemoveUser({ open, setOpen, serverId, userList, serverUsers, updateUserList }) {
+export default function RemoveUser({ open, setOpen, serverId, serverUsers, updateUserList }) {
   const [selectedUser, setSelectedUser] = useState("");
   const [displayUsers, setDisplayUsers] = useState([]); 
 
@@ -17,13 +17,30 @@ export default function RemoveUser({ open, setOpen, serverId, userList, serverUs
 
   useEffect(() => {
     if (!serverUsers || serverUsers.length === 0) {
-        setDisplayUsers([]); 
-        return;
+      setDisplayUsers([]); 
+      return;
     }
 
-    setDisplayUsers(serverUsers.map(user => user.username));
+    // Decode the token to extract the current user's ID
+    let currentUser = "";
+    if (token) {
+      try {
+        currentUser = jwtDecode(token).id; // or whatever property holds the username/ID
+      } catch (e) {
+        console.error("Token decoding failed:", e);
+      }
+    }
 
-}, [serverUsers]);
+    if (currentUser) {
+      setDisplayUsers(
+        serverUsers
+          .filter(user => user.username.toLowerCase() !== currentUser.toLowerCase())
+          .map(user => user.username)
+      );
+    } else {
+      setDisplayUsers(serverUsers.map(user => user.username));
+    }
+  }, [serverUsers, token]);
 
   // Handle user removal
   const handleSubmit = async (event) => {
@@ -97,7 +114,7 @@ export default function RemoveUser({ open, setOpen, serverId, userList, serverUs
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                {/* Close Button X */}
+                {/* Close Button */}
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
@@ -116,12 +133,8 @@ export default function RemoveUser({ open, setOpen, serverId, userList, serverUs
                     Please select a user to remove.
                   </p>
 
-                  <form
-                    onSubmit={handleSubmit}
-                    className="mt-6 border-t border-gray-100"
-                  >
+                  <form onSubmit={handleSubmit} className="mt-6 border-t border-gray-100">
                     <dl className="divide-y divide-gray-100">
-
                       {/* User Dropdown */}
                       <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
                         <dt className="text-sm text-gray-900">Select User</dt>
@@ -133,9 +146,7 @@ export default function RemoveUser({ open, setOpen, serverId, userList, serverUs
                             onChange={(e) => setSelectedUser(e.target.value)}
                             className="w-full rounded-md px-3 py-1.5 bg-gray-50 outline outline-1 outline-gray-300 focus:outline-red-600"
                           >
-                            {/* Default option */}
                             <option value="" disabled>-- Select a user --</option>
-
                             {displayUsers.map((user, index) => (
                               <option key={index} value={user}>
                                 {user}
@@ -144,12 +155,10 @@ export default function RemoveUser({ open, setOpen, serverId, userList, serverUs
                           </select>
                         </dd>
                       </div>
-
                     </dl>
 
                     {/* Buttons */}
                     <div className="mt-6 flex items-center justify-end px-3 py-3 gap-x-6">
-                      {/* Cancel Button */}
                       <button
                         type="button"
                         onClick={() => setOpen(false)}
@@ -158,7 +167,6 @@ export default function RemoveUser({ open, setOpen, serverId, userList, serverUs
                         Cancel
                       </button>
 
-                      {/* Remove Button */}
                       <button
                         type="submit"
                         className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500"
