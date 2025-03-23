@@ -3,32 +3,51 @@ import Dropdown from './Admin_DropDown';
 import p5 from 'p5';
 // import { db } from '../firebase'; // Firebase config
 // import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { UserPlusIcon, UserMinusIcon, Cog6ToothIcon, ArrowRightStartOnRectangleIcon} from '@heroicons/react/24/outline'
-import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import Bubbles from '../animations/Bubbles'
-import axios from "axios";
-import Notiflix from "notiflix";
+import {
+  UserPlusIcon,
+  UserMinusIcon,
+  Cog6ToothIcon,
+  ArrowRightStartOnRectangleIcon
+} from '@heroicons/react/24/outline';
+import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import Bubbles from '../animations/Bubbles';
+import axios from 'axios';
+import Notiflix from 'notiflix';
 import UserStatusIndicator from './UserStatusIndicator';
-
 
 const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
-
-export default function Chat({ messages, selectedServer, isAdmin, openAddUser, openRemoveUser, openChangeRole, selectedMessages,handleMessageSelect, isDeleteMode, handleDeleteModeToggle, getUpdatedRoles, serverMode, currentUser, refresh }) {
-  
+export default function Chat({
+  messages,
+  selectedServer,
+  isAdmin,
+  openAddUser,
+  openRemoveUser,
+  openChangeRole,
+  selectedMessages,
+  handleMessageSelect,
+  isDeleteMode,
+  handleDeleteModeToggle,
+  getUpdatedRoles,
+  serverMode,
+  currentUser,
+  refresh
+}) {
   const [newMessage, setNewMessage] = useState('');
   const [open, setOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState('');
-  const buttonRef = useRef(null); // Reference for the button
+  const buttonRef = useRef(null);
 
   const token = localStorage.getItem('token');
 
-  useEffect(() => {
-    console.log(selectedMessages);
-    //console.log(isDeleteMode)
-  }, [selectedMessages]);
+  // Track the status + lastChanged for "last seen" display
+  const [status, setStatus] = useState('offline');
+  const [lastChanged, setLastChanged] = useState(null);
 
+  useEffect(() => {
+    console.log('Selected messages:', selectedMessages);
+  }, [selectedMessages]);
 
   if (!selectedServer) {
     if (serverMode){
@@ -38,22 +57,25 @@ export default function Chat({ messages, selectedServer, isAdmin, openAddUser, o
     }
   }
 
+  // Callback from UserStatusIndicator whenever presence changes
+  const handlePresenceChange = (newStatus, newLastChanged) => {
+    setStatus(newStatus);
+    setLastChanged(newLastChanged);
+  };
 
   const deleteMessages = async () => {
     try {
-      const res = await axios.delete(`${API_URL}/servers/messages`, {
-        // All config goes here
+      await axios.delete(`${API_URL}/servers/messages`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
           'x-api-key': API_KEY
         },
         data: {
-          "serverId": selectedServer.id,
-          "selectedMessages": selectedMessages
+          serverId: selectedServer.id,
+          selectedMessages
         }
       });
-  
       Notiflix.Notify.success('Messages deleted successfully');
     } catch (error) {
       Notiflix.Notify.failure(
@@ -67,43 +89,40 @@ export default function Chat({ messages, selectedServer, isAdmin, openAddUser, o
     try {
       const destinationRef = serverMode
         ? `${API_URL}/servers/messages`
-        : `${API_URL}/dms/messages`
-        
-      const response = await axios.post(destinationRef,
+        : `${API_URL}/dms/messages`;
+
+      await axios.post(
+        destinationRef,
         {
-        text: newMessage,
-        serverId: selectedServer.id,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'x-api-key': API_KEY,
+          text: newMessage,
+          serverId: selectedServer.id
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'x-api-key': API_KEY
+          }
+        }
+      );
       setNewMessage('');
-      // Optionally show a notification for success
     } catch (error) {
       console.error('Error sending message:', error);
-      // Optionally show an error notification
     }
   };
 
-
   const removeUser = async (user) => {
     try {
-
-      const res = await axios.delete(`${API_URL}/servers/remove-user`, {
-        // All config goes here
+      await axios.delete(`${API_URL}/servers/remove-user`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
           'x-api-key': API_KEY
         },
         data: {
-          "serverId": selectedServer.id,
-          "username": user
+          serverId: selectedServer.id,
+          username: user
         }
       });
-  
       Notiflix.Notify.success('User exited server successfully');
       refresh();
     } catch (error) {
@@ -114,67 +133,73 @@ export default function Chat({ messages, selectedServer, isAdmin, openAddUser, o
     }
   };
 
+  return (
+    <div className="relative flex flex-col h-[calc(100vh-5rem)] p-4 bg-gradient-to-t from-cyan-200 via-emerald-100 to-teal-50 text-indigo-700 overflow-hidden">
+      {/* Particle Background */}
+      <Bubbles className="z-10" />
 
-
-return (
-  
-    <div className="relative flex flex-col h-[calc(100vh-5rem)] p-4 bg-gradient-to-t from-cyan-200 via-emerald-100 to-teal-50 text-indigo-700  overflow-hidden">
-
-       {/* Particle Background */}
-       <Bubbles className="z-10"/>
-
-      <div className='flex justify-between border-b border-blue-900/30 pb-2 mb-4'>
-                
-        {/* Server name & action buttons in one flex row */}
+      {/* Header: name + presence + admin buttons */}
+      <div className="flex justify-between border-b border-blue-900/30 pb-2 mb-4">
         <div className="relative z-20 flex items-center">
+          <div className="flex flex-col">
+            {/* Row 1: Dot on left, Name on right */}
+            <div className="flex items-center">
+              {/* Only show presence if not in server mode */}
+              {!serverMode && (
+                <UserStatusIndicator
+                  username={selectedServer.name}
+                  onPresenceChange={handlePresenceChange}
+                />
+              )}
+              <h2 className="text-2xl ml-2">{selectedServer.name}</h2>
+            </div>
 
-          <h2 className="text-2xl flex items-center">
-            {!serverMode && <UserStatusIndicator username={selectedServer.name} />}
-            {selectedServer.name}
-          </h2>
+            {/* Row 2: last seen if offline */}
+            {!serverMode && status === 'offline' && lastChanged && (
+              <div className="text-xs text-gray-500 mt-1">
+                Last seen: {new Date(lastChanged).toLocaleString()}
+              </div>
+            )}
+          </div>
 
           {/* Action buttons (only if isAdmin is true) */}
           {isAdmin && (
             <div className="flex items-center space-x-4 ml-2 border-l border-blue-900/30 pl-2">
-              <button 
-                  onClick={openAddUser} 
-                  className="cursor-pointer hover:text-blue-500"
+              <button
+                onClick={openAddUser}
+                className="cursor-pointer hover:text-blue-500"
               >
-                  <UserPlusIcon className="h-6 w-6" />
-              </button>
-
-              <button 
-                  onClick={openRemoveUser}
-                  className="cursor-pointer hover:text-blue-500"
-              >
-                <UserMinusIcon className="h-6 w-6 cursor-pointer hover:text-blue-500"/>
+                <UserPlusIcon className="h-6 w-6" />
               </button>
 
               <button
-              ref={buttonRef}
-              onClick={() => setOpen(!open)}>
-                
-              <Cog6ToothIcon className="h-6 w-6 cursor-pointer hover:text-blue-500" />
+                onClick={openRemoveUser}
+                className="cursor-pointer hover:text-blue-500"
+              >
+                <UserMinusIcon className="h-6 w-6 cursor-pointer hover:text-blue-500" />
+              </button>
+
+              <button ref={buttonRef} onClick={() => setOpen(!open)}>
+                <Cog6ToothIcon className="h-6 w-6 cursor-pointer hover:text-blue-500" />
               </button>
               <Dropdown
                 open={open}
                 setOpen={setOpen}
                 deleteMessages={deleteMessages}
-                isDeleteMode = {isDeleteMode}
-                handleDeleteModeToggle = {handleDeleteModeToggle}
+                isDeleteMode={isDeleteMode}
+                handleDeleteModeToggle={handleDeleteModeToggle}
                 buttonRef={buttonRef}
-                selectedMessages = {selectedMessages}
-                handleMessageSelect = {handleMessageSelect}
+                selectedMessages={selectedMessages}
+                handleMessageSelect={handleMessageSelect}
                 openChangeRole={openChangeRole}
                 getUpdatedRoles={getUpdatedRoles}
-                />
-          {selectedAction && <p>Selected Action: {selectedAction}</p>}
-
+              />
+              {selectedAction && <p>Selected Action: {selectedAction}</p>}
             </div>
           )}
         </div>
 
-        {/* Only allow users to exit chat if in Server Mode */}
+        {/* If in server mode, show a button to leave the server */}
         {serverMode && (
           <button
             className="cursor-pointer hover:text-blue-500"
@@ -184,24 +209,19 @@ return (
                 `Are you sure you want to leave ${selectedServer.name}?`,
                 'Yes',
                 'No',
-                function okCb() {
-                  removeUser(currentUser);
-                },
-                function cancelCb() {
-                  
-                }
-              )}
+                () => removeUser(currentUser),
+                () => {}
+              )
+            }
           >
-            <ArrowRightStartOnRectangleIcon className="h-6 w-6 mr-2"/>
+            <ArrowRightStartOnRectangleIcon className="h-6 w-6 mr-2" />
           </button>
-
-      )}
-
+        )}
       </div>
- 
+
+      {/* Messages display */}
       <div className="flex-1 z-10 overflow-y-auto space-y-2">
         {messages.map((msg) => {
-          // Format the timestamp using JS Date
           const dateObj = new Date(msg.timestamp);
           const hours = String(dateObj.getHours()).padStart(2, '0');
           const minutes = String(dateObj.getMinutes()).padStart(2, '0');
@@ -219,35 +239,27 @@ return (
                 }
               }}
               className={`p-2 px-3 rounded-xl max-w-fit ${
-                selectedMessages.includes(msg.id) ? "bg-red-200" : "bg-indigo-100"
+                selectedMessages.includes(msg.id) ? 'bg-red-200' : 'bg-indigo-100'
               }`}
             >
-              {/* Username and message inline */}
               <div>
                 <span className="text-violet-800 font-semibold">{msg.username}</span>
                 <span className="ml-2 text-indigo-700">{msg.text}</span>
               </div>
-
-              {/* Timestamp below */}
-              <div className="text-xs text-gray-500">
-                {formattedTimestamp}
-              </div>
+              <div className="text-xs text-gray-500">{formattedTimestamp}</div>
             </div>
           );
         })}
       </div>
 
-
-
-
       {/* Message Input */}
       <form
         onSubmit={(e) => {
-          e.preventDefault(); // Prevents the default browser refresh on submit
+          e.preventDefault();
           sendMessage();
         }}
       >
-        <div className="relative mt-4 z-20 flex items-center space-x-2" >
+        <div className="relative mt-4 z-20 flex items-center space-x-2">
           <input
             type="text"
             className="flex-1 p-2 bg-teal-50 rounded-md"
@@ -255,16 +267,11 @@ return (
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
           />
-          <button 
-            type="submit"
-            className="p-2 bg-sky-300 rounded-md hover:bg-sky-400"
-            >
-            Send 
+          <button type="submit" className="p-2 bg-sky-300 rounded-md hover:bg-sky-400">
+            Send
           </button>
         </div>
       </form>
     </div>
   );
-
 }
-

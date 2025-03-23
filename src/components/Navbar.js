@@ -3,8 +3,13 @@ import { Bars3Icon, BellIcon, XMarkIcon, UserIcon } from '@heroicons/react/24/ou
 import Logo from '../images/Logo.png';
 import DmIcon from '../images/DmIcon.png';
 import GcIcon from '../images/GcIcon.png';
+import {setUserOffline} from '../presence'
 
 
+
+
+
+export default function Navbar({user, serverMode, toggleServerMode}) {
 
 const navigation = [
 
@@ -13,7 +18,8 @@ const navigation = [
    
 ]
 
-const logout = () => {
+const logout = async () => {
+    await setUserOffline(user); // Wait for the offline update
     localStorage.removeItem('token');
     window.location.href = '/';
   };
@@ -27,10 +33,6 @@ const userNavigation = [
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
-
-export default function Navbar({user, serverMode, toggleServerMode}) {
-
-
     return (
         <>
             <div className="min-h-full">
