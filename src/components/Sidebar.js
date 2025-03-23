@@ -110,8 +110,8 @@ export default function Sidebar({ servers, openPlusMenu, setSelectedServer, sele
     selectedServer?.id === server.id ? 'underline' : ''
   }`}
 >
-  {/* Only show presence if NOT in server mode */}
-  {!serverMode && <UserStatusIndicator username={server.name} />}
+  {/* Only show presence if NOT in server mode; hide “last seen” in sidebar */}
+  {!serverMode && <UserStatusIndicator username={server.name} hideLastSeen={true} />}
   {server.name}
 </span>
               </li>
