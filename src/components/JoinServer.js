@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import axios from "axios";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import Notiflix from "notiflix";
+import { getDatabase, ref, get, onValue, off } from 'firebase/database';
 
 
 // Get API info
@@ -18,7 +19,7 @@ export default function JoinServer({ open, setOpen, servers, currentServers, cur
     const token = localStorage.getItem('token');
 
     useEffect(() => {
-        setRequestsSent([]);
+        fetchRequestsSent();
     }, [open]);
 
     // Filter servers by search and remove currents servers
@@ -34,6 +35,41 @@ export default function JoinServer({ open, setOpen, servers, currentServers, cur
     }, [servers, currentServers, search]); 
 
 
+    const fetchRequestsSent = async () => {
+        const db = getDatabase();
+        const serversRef = ref(db, 'servers');
+        // Turn off any existing listeners
+        off(serversRef);
+  
+        try {
+          // Fetch all servers once
+          const snapshot = await get(serversRef);
+          if (snapshot.exists()) {
+            const serversData = snapshot.val();
+            const updatedRequests = [];
+  
+            // Loop through all servers
+            for (const serverId in serversData) {
+              const server = serversData[serverId];
+              // Check if this server has a requests node and if it contains currentUser
+              if (server.requests && server.requests[currentUser]) {
+                updatedRequests.push(serverId);
+              }
+            }
+  
+            // Now you have a list of serverIds for which the current user has made a request
+            // Set or return it as needed
+            setRequestsSent(updatedRequests);
+          } else {
+            // No servers exist
+            setRequestsSent([]);
+          }
+        } catch (err) {
+          console.error('Error fetching requestsSent:', err);
+        }
+    };
+
+
     const requestJoinServer = async (serverId) => {
         // Add serverId to requestsSent array only if not already present
         setRequestsSent(prevRequests => {
@@ -43,8 +79,27 @@ export default function JoinServer({ open, setOpen, servers, currentServers, cur
             return prevRequests;
         });
 
+        try {
+            const destinationRef = `${API_URL}/servers/join`;
+              
+            const response = await axios.post(destinationRef,
+              {
+              serverId: serverId,
+            }, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'x-api-key': API_KEY,
+              },
+            });
+            fetchRequestsSent();
+            Notiflix.Notify.success("Request sent successfully!");
+          } catch (error) {
+            console.error('Error sending request:', error);
+            // Optionally show an error notification
+          }
 
     };
+
 
     //Create group on form submit
     const handleSubmit = async (event) => {
@@ -120,10 +175,10 @@ export default function JoinServer({ open, setOpen, servers, currentServers, cur
                     {/* Form Section */}
                     <div className="px-6 py-6">
                     <h3 className="text-lg font-medium text-gray-900">
-                        New Direct Message
+                        Request to join a server
                     </h3>
                     <p className="mt-1 text-sm text-gray-900">
-                        Select a user to start chatting with
+                        Select servers to send a request to
                     </p>
 
                     <form
@@ -134,7 +189,7 @@ export default function JoinServer({ open, setOpen, servers, currentServers, cur
                         <div className="relative flex-1 mb-4">
                             <input
                                 type="text"
-                                placeholder="Search for a friend"
+                                placeholder="Search for a server"
                                 className="w-full p-2 pl-4 pr-10 bg-white rounded-md text-sm text-gray-900 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}

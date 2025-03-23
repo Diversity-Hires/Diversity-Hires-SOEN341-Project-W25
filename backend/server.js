@@ -409,6 +409,8 @@ app.post('/api/servers/messages', apiKeyMiddleware, authMiddleware, async (req, 
 
     // Push a new message under servers/{serverId}/messages
     const messagesRef = serverRef.child('messages');
+
+    // Generate a unique id for this message
     const newMessageRef = messagesRef.push();
 
     await newMessageRef.set({
@@ -657,6 +659,69 @@ app.delete('/api/dms/messages', apiKeyMiddleware, authMiddleware, async (req, re
     return res.status(500).json({ message: 'Server error.' });
   }
 });
+
+
+
+// Send a request to join a server
+app.post('/api/servers/join', apiKeyMiddleware, authMiddleware, async (req, res) => {
+  try {
+    const { serverId } = req.body;
+
+    // Validate input
+    if (!serverId) {
+      return res.status(400).json({ message: 'Missing serverId.' });
+    }
+
+    // Check if the server exists
+    const serverRef = db.ref(`servers/${serverId}`);
+    const serverSnapshot = await serverRef.once('value');
+    if (!serverSnapshot.exists()) {
+      return res.status(404).json({ message: 'Server not found.' });
+    }
+
+    // The current user is stored in req.userId by authMiddleware
+    const username = req.userId;
+
+    // Check if the user is already part of the server
+    const userRef = serverRef.child('users').child(username);
+    const userSnapshot = await userRef.once('value');
+    if (userSnapshot.exists()) {
+      // If the user is listed in server's users node, they are already a member
+      return res.status(403).json({ message: 'User is already a member of this server.' });
+    }
+
+    const timestamp = Date.now(); // or new Date().toISOString()
+
+    // Check if the user already requested to join
+    const requestRef = serverRef.child('requests').child(username);
+    const requestSnapshot = await requestRef.once('value');
+    if (requestSnapshot.exists()) {
+      // If the user is already listed in server's requests node, they already sent a request and it is pending
+      return res.status(403).json({ message: 'Request already pending for this user' });
+    }
+
+
+    // Push a new request under servers/{serverId}/requests
+    await requestRef.set({
+      timestamp
+    });
+
+    // Return success
+    return res.status(201).json({
+      message: 'Request sent successfully!',
+      data: {
+        username,
+        timestamp
+      }
+    });
+
+  } catch (error) {
+    console.error('Error sending request to join server:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+
 
 // ================ START SERVER ================
 app.listen(PORT, () => {
