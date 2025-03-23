@@ -19,6 +19,8 @@ import RemoveUser from '../components/Remove_user';
 import ChangeRoleModal from '../components/ChangeRoleModal.js'
 import { setUserOnline } from '../presence.js'; 
 import JoinServer from '../components/JoinServer.js';
+import Snek from '../animations/Snek.js';
+
 import Notiflix from 'notiflix';
 
 function Home() {
@@ -38,6 +40,7 @@ function Home() {
   const [openChangeRoleDialog, setOpenChangeRoleDialog] = useState(false);  
   const [isDeleteMode, setIsDeleteMode] = useState(false); // For admin deleting messages
   const [serverMode, setServerMode] = useState(true);
+  const [openSnek, setOpenSnek] = useState(false);
 
   // Get the current user from the token
   const token = localStorage.getItem('token');
@@ -395,6 +398,7 @@ function Home() {
         user={currentUser}
         serverMode={serverMode}
         toggleServerMode={handleServerModeToggle}
+        setOpenSnek={setOpenSnek}
       />
   
       <div className="flex flex-1 overflow-hidden">
@@ -480,6 +484,12 @@ function Home() {
         serverUsers={selectedServerUsers}
         getUpdatedRoles={getServerUsers}
       />
+
+      <Snek
+        open={openSnek}
+        setOpen={setOpenSnek}
+      />
+
     </div>
   );
 }

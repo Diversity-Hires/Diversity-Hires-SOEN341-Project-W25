@@ -3,13 +3,11 @@ import { Bars3Icon, BellIcon, XMarkIcon, UserIcon } from '@heroicons/react/24/ou
 import Logo from '../images/Logo.png';
 import DmIcon from '../images/DmIcon.png';
 import GcIcon from '../images/GcIcon.png';
-import {setUserOffline} from '../presence'
+import {setUserOffline} from '../presence';
 
 
 
-
-
-export default function Navbar({user, serverMode, toggleServerMode}) {
+export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek}) {
 
 const navigation = [
 
@@ -26,7 +24,7 @@ const logout = async () => {
 
 const userNavigation = [
   { name: 'Your Profile', href: '#' },
-  { name: 'Settings', href: '#' },
+  { name: 'Settings', onClick: setOpenSnek },
   { name: 'Sign out', onClick: logout },
 ]
 
@@ -100,7 +98,7 @@ function classNames(...classes) {
                         <div className="ml-4 flex items-center md:ml-6">
                         <button
                             type="button"
-                            className="relative rounded-full p-1 text-violet-800 hover:text-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden"
+                            className="relative rounded-full p-1 text-violet-800 hover:text-white" // focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
                         >
                             <span className="absolute -inset-1.5" />
                             <span className="sr-only">View notifications</span>
@@ -110,7 +108,8 @@ function classNames(...classes) {
                         {/* Profile dropdown */}
                         <Menu as="div" className="relative ml-3">
                             
-                                <MenuButton className="relative flex max-w-xs items-center rounded-full hover:text-white text-sm focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden">
+                                <MenuButton className="relative flex max-w-xs items-center rounded-full hover:text-white text-sm" //focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
+                                >
                                     <span className="absolute -inset-1.5" />
                                     <span className="sr-only">Open user menu</span>
                                     <div className="flex justify center items-center gap-2">
@@ -159,7 +158,8 @@ function classNames(...classes) {
                   <div className="-mr-2 flex md:hidden">
     
                     {/* Mobile menu button */}
-                    <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden">
+                    <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white" //focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
+                    >
                       <span className="absolute -inset-0.5" />
                       <span className="sr-only">Open main menu</span>
                       <Bars3Icon aria-hidden="true" className="block size-6 group-data-open:hidden" />
@@ -197,7 +197,7 @@ function classNames(...classes) {
                         </div>
                         <button
                         type="button"
-                        className="relative ml-auto shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden"
+                        className="relative ml-auto shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white" //focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
                         >
                         <span className="absolute -inset-1.5" />
                         <span className="sr-only">View notifications</span>
@@ -221,7 +221,9 @@ function classNames(...classes) {
                     </div>
                 </DisclosurePanel>
                 </Disclosure>
-    
+                
+
+
     
             </div>
         </>
