@@ -6,7 +6,7 @@ import UserStatusIndicator from './UserStatusIndicator';
 
 
 
-export default function Sidebar({ servers, openCreateServerOrDM, setSelectedServer, selectedServer,serverMode}) {
+export default function Sidebar({ servers, openPlusMenu, setSelectedServer, selectedServer,serverMode}) {
   const [search, setSearch] = useState('');
   
 
@@ -67,7 +67,7 @@ export default function Sidebar({ servers, openCreateServerOrDM, setSelectedServ
 
         {/* Create Server Icon */}
         <button
-            onClick={openCreateServerOrDM}
+            onClick={openPlusMenu}
             className='text-violet-800 hover:scale-110'
         >
           <svg

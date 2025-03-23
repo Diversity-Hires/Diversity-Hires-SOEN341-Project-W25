@@ -18,16 +18,20 @@ import AddUserPopUp from '../components/Add_user';
 import RemoveUser from '../components/Remove_user';
 import ChangeRoleModal from '../components/ChangeRoleModal.js'
 import { setUserOnline } from '../presence.js'; 
+import JoinServer from '../components/JoinServer.js';
+import Notiflix from 'notiflix';
 
 function Home() {
 
   const [selectedServer, setSelectedServer] = useState(null);
   const [userServers, setUserServers] = useState([]);
+  const [allExistingServers, setAllExistingServers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [userList, setUserList] = useState([]);
   const [selectedMessages, setSelectedMessages] = useState([]); // Tracks messages selected for deletion
   const [selectedServerUsers, setSelectedServerUsers] = useState(null);
   const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
+  const [openJoinServerDialog, setOpenJoinServerDialog] = useState(false);
   const [openCreateDMDialog, setOpenCreateDMDialog] = useState(false);
   const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
   const [openRemoveUserDialog, setOpenRemoveUserDialog] = useState(false);
@@ -73,6 +77,30 @@ function Home() {
   const handleServerModeToggle = () => {
     setServerMode((prev) => !prev);
   }; 
+
+  const handlePlusMenuForServers = () => {
+    Notiflix.Confirm.show(
+      'Start chatting now!',
+      'Please choose action',
+      'Create new server',
+      'Join existing server',
+      function okCb() {
+        handleCreateServer();
+      },
+      function cancelCb() {
+        setOpenJoinServerDialog(true);
+      },
+      {
+        width: '400px',
+        titleFontSize: '20px',
+        titleColor: '#372aac',
+        okButtonColor: '#FFFFFF',
+        okButtonBackground: '#4f39f6',
+        cancelButtonColor: '#FFFFFF',
+        cancelButtonBackground: '#7f22fe',
+      }
+    );
+  }
 
   const refreshServersAndDMs = () => {
     if (serverMode === true) {
@@ -214,6 +242,7 @@ function Home() {
   
           setUserServers(serversArray);
           console.log('Servers array:', serversArray);
+          getAllExistingServers();
         } else {
           setUserServers([]);
         }
@@ -221,6 +250,37 @@ function Home() {
       .catch((error) => {
         console.error('Error fetching servers:', error);
       });
+  }
+
+   // Function to get the list of all servers
+  function getAllExistingServers() {
+    const db = getDatabase();
+    const serversRef = ref(db, `servers`);
+  
+    get(serversRef)
+    .then((snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const serverKeys = Object.keys(data);
+        const serversArray = [];
+
+        serverKeys.forEach((serverId) => {
+          const serverData = data[serverId];
+          serversArray.push({
+            id: serverId,
+            name: serverData.name || 'Unnamed Server',
+          });
+        });
+  
+        setAllExistingServers(serversArray);
+        //console.log('Servers array:', serversArray);
+      } else {
+        setAllExistingServers([]);
+      }
+    })
+    .catch((error) => {
+      console.error('Error fetching servers:', error);
+    });
   }
   
   async function DmNameHelper(DmID) {
@@ -342,7 +402,7 @@ function Home() {
           serverMode={serverMode}
           servers={userServers} 
           setSelectedServer={setSelectedServer}
-          openCreateServerOrDM={serverMode ? handleCreateServer : handleCreateDM} 
+          openPlusMenu={serverMode ? handlePlusMenuForServers : handleCreateDM} 
           selectedServer={selectedServer}
           className="w-64 min-w-32 flex-shrink-0" 
         />
@@ -384,6 +444,15 @@ function Home() {
         userList={userList}
         refresh={refreshServersAndDMs}
         currentDMs={userServers}
+      />
+
+      <JoinServer
+        open={openJoinServerDialog}
+        setOpen={setOpenJoinServerDialog}
+        servers={allExistingServers}
+        currentServers={userServers}
+        currentUser={currentUser}
+        refresh={refreshServersAndDMs}
       />
   
       <AddUserPopUp
