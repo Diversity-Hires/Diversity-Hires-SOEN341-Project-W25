@@ -215,7 +215,7 @@ function Home() {
         setMessages([]);
       }
     });
-    console.log(messages);
+    //console.log(messages);
   }
 
   // Function to get the list of servers for the user
