@@ -106,14 +106,16 @@ export default function Sidebar({ servers, openPlusMenu, setSelectedServer, sele
                 />
                 {/* Server name overlay */}
                 <span
-  className={`absolute top-1/2 left-1/2 w-full text-center transform -translate-x-1/2 -translate-y-1/2 text-xl text-violet-800 pointer-events-none ${
-    selectedServer?.id === server.id ? 'underline' : ''
-  }`}
->
-  {/* Only show presence if NOT in server mode; hide “last seen” in sidebar */}
-  {!serverMode && <UserStatusIndicator username={server.name} hideLastSeen={true} />}
-  {server.name}
-</span>
+                  className={`absolute top-1/2 left-1/2 w-full text-center transform -translate-x-1/2 -translate-y-1/2 text-xl text-violet-800 pointer-events-none ${
+                    selectedServer?.id === server.id ? 'underline' : ''
+                  }`}
+                >
+                  {/* Only show presence if NOT in server mode; hide “last seen” in sidebar */}
+                  <div className='flex justify-center items-center gap-2 '>
+                  {!serverMode && <UserStatusIndicator username={server.name} hideLastSeen={true} />}
+                  {server.name}
+                  </div>
+                </span>
               </li>
             ))}
           </ul>
