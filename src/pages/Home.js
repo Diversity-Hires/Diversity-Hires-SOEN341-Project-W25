@@ -76,6 +76,7 @@ function Home() {
 
   const handleServerModeToggle = () => {
     setServerMode((prev) => !prev);
+    setSelectedServer(null);
   }; 
 
   const handlePlusMenuForServers = () => {

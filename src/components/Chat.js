@@ -31,7 +31,11 @@ export default function Chat({ messages, selectedServer, isAdmin, openAddUser, o
 
 
   if (!selectedServer) {
-    return <div className="flex-1 flex items-center justify-center bg-gradient-to-t from-cyan-200 via-emerald-100 to-teal-50 text-indigo-800 ">Select a server to start chatting</div>;
+    if (serverMode){
+      return <div className="flex-1 flex items-center justify-center bg-gradient-to-t from-cyan-200 via-emerald-100 to-teal-50 text-indigo-800 ">Select a server to start chatting</div>;
+    }else {
+      return <div className="flex-1 flex items-center justify-center bg-gradient-to-t from-cyan-200 via-emerald-100 to-teal-50 text-indigo-800 ">Select a friend to start chatting with</div>;
+    }
   }
 
 
