@@ -4,6 +4,9 @@ import Logo from '../images/Logo.png';
 import DmIcon from '../images/DmIcon.png';
 import GcIcon from '../images/GcIcon.png';
 import {setUserOffline} from '../presence';
+import React, { Component } from "react";
+import Switch from "react-switch";
+import { useState } from "react";
 
 
 
@@ -22,11 +25,30 @@ const logout = async () => {
     window.location.href = '/';
   };
 
+  const ActiveToggleSwitch = () => {
+    const [isActive, setIsActive] = useState(false);
+  
+    return (
+      <div className="flex items-center justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <span className="text-gray-900 font-medium">Invisible</span>
+        <Switch
+          checked={isActive}
+          onChange={() => setIsActive(!isActive)}
+          offColor="#ccc"
+          onColor="#0f0"
+          className="react-switch"
+        />
+      </div>
+    );
+  };
+
 const userNavigation = [
-  { name: 'Your Profile', href: '#' },
-  { name: 'Settings', onClick: setOpenSnek },
-  { name: 'Sign out', onClick: logout },
-]
+    { name: 'Your Profile', href: '#' },
+    { name: 'Settings', href: '#' },
+    { name:'Invisible',component: () => <ActiveToggleSwitch /> }, 
+    { name: 'Sign out', onClick: logout },
+];
+
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -127,7 +149,9 @@ function classNames(...classes) {
                             
                             {userNavigation.map((item) => (
                                 <MenuItem key={item.name}>
-                                    {item.onClick ? (
+                                    {item.component ? (
+                                    item.component()
+                                    ) : item.onClick ? (
                                     <button
                                         onClick={item.onClick}
                                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -213,7 +237,7 @@ function classNames(...classes) {
                                 onClick={item.onClick ? item.onClick : undefined}
                                 className="block w-full text-left rounded-md px-3 py-2 text-base text-gray-400 hover:bg-gray-700 hover:text-white"
                             >
-                                {item.name}
+                                {item.component ? item.component() : item.name}
                             </DisclosureButton>
                             ))}
 
