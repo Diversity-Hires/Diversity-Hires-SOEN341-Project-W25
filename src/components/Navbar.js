@@ -3,8 +3,8 @@ import { Bars3Icon, BellIcon, XMarkIcon, UserIcon } from '@heroicons/react/24/ou
 import Logo from '../images/Logo.png';
 import DmIcon from '../images/DmIcon.png';
 import GcIcon from '../images/GcIcon.png';
-import {setUserOffline} from '../presence';
-import React, { Component } from "react";
+import {setUserOffline, isUserAway, toggleUserAway} from '../presence';
+import React, { Component, useEffect } from "react";
 import Switch from "react-switch";
 import { useState } from "react";
 
@@ -12,47 +12,67 @@ import { useState } from "react";
 
 export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek}) {
 
-const navigation = [
+    const [isAway, setIsAway] = useState(null);
 
-    { name: 'Servers', href: '#', current: true, icon: GcIcon}, // use GcIcon import
-    { name: 'DM', href: '#', current: false, icon: DmIcon}, //use DmIcon import
-   
-]
-
-const logout = async () => {
-    await setUserOffline(user); // Wait for the offline update
-    localStorage.removeItem('token');
-    window.location.href = '/';
-  };
-
-  const ActiveToggleSwitch = () => {
-    const [isActive, setIsActive] = useState(false);
-  
-    return (
-      <div className="flex items-center justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-        <span className="text-gray-900 font-medium">Invisible</span>
-        <Switch
-          checked={isActive}
-          onChange={() => setIsActive(!isActive)}
-          offColor="#ccc"
-          onColor="#0f0"
-          className="react-switch"
-        />
-      </div>
-    );
-  };
-
-const userNavigation = [
-    { name: 'Your Profile', href: '#' },
-    { name: 'Settings', href: '#' },
-    { name:'Invisible',component: () => <ActiveToggleSwitch /> }, 
-    { name: 'Sign out', onClick: logout },
-];
+    // Set isAway to the away status of the user
+    useEffect(() => {
+        isUserAway(user)
+          .then(setIsAway)
+          .catch(err => console.error(err));
+      }, [user, serverMode]);
 
 
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ')
-}
+    const logout = () => {
+        setUserOffline(user); // Wait for the offline update
+        localStorage.removeItem('token');
+        window.location.href = '/';
+    };
+
+    const navigation = [
+
+        { name: 'Servers', href: '#', current: true, icon: GcIcon}, // use GcIcon import
+        { name: 'DM', href: '#', current: false, icon: DmIcon}, //use DmIcon import
+    
+    ]
+
+    const userNavigation = [
+        { name: 'Your Profile', href: '#' },
+        { name: 'Settings', onClick: setOpenSnek },
+        { name: 'Away', component: () => <ActiveToggleSwitch /> }, 
+        { name: 'Sign out', onClick: logout },
+    ];
+
+
+    const ActiveToggleSwitch = () => {
+        return (
+        <div className="flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-gray-100">
+            <span className="text-gray-700 font-medium">Away</span>
+            <Switch
+            checked={!!isAway}
+            onChange={() => {
+                toggleUserAway(user);
+                setIsAway(!isAway);
+            }}
+        
+            offColor="#ccc"
+            onColor="#0f0"
+            className="react-switch"
+            />
+        </div>
+        );
+    };
+
+    const toggleAwayHelper = () => {
+       
+    };
+
+
+    function classNames(...classes) {
+    return classes.filter(Boolean).join(' ')
+    }
+
+
+
     return (
         <>
             <div className="min-h-full">
@@ -77,7 +97,7 @@ function classNames(...classes) {
                             {navigation.map((item) => {
 
                                 // Determine if this item is active based on serverMode
-                                const isActive = (item.name === 'Servers' && serverMode) || (item.name === 'DM' && !serverMode);
+                                const isAway = (item.name === 'Servers' && serverMode) || (item.name === 'DM' && !serverMode);
 
                                 return (
                                 <a
@@ -91,9 +111,9 @@ function classNames(...classes) {
 
 
                                     }}
-                                    aria-current={isActive ? 'page' : undefined}
+                                    aria-current={isAway ? 'page' : undefined}
                                     className={classNames(
-                                    isActive
+                                    isAway
                                         ? 'bg-blue-200 text-violet-700'
                                         : 'text-violet-700 hover:bg-blue-200 hover:text-white',
                                     'rounded-md text-sm mx-3 my-2'
