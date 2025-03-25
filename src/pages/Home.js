@@ -2,41 +2,63 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import Sidebar from '../components/Sidebar.js'
 import Chat from '../components/Chat.js'
-//import Details from '../components/details/Details.jsx'
-import Navbar from '../components/Navbar.js'
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
+import { waitFor } from '@testing-library/react'
 
 // imports for front-end access to Firebase DB
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getDatabase, ref, get, onValue, off } from 'firebase/database';
+
+//import components
+import Navbar from '../components/Navbar.js'
 import CreateServerPopUp from '../components/CreateGroup';
-import AddUserPopUp from '../components/Add_user'
-import { waitFor } from '@testing-library/react'
+import CreateDM from '../components/CreateDM.js';
+import AddUserPopUp from '../components/Add_user';
+import RemoveUser from '../components/Remove_user';
+import ChangeRoleModal from '../components/ChangeRoleModal.js'
+import { setUserOnline } from '../presence.js'; 
+import JoinServer from '../components/JoinServer.js';
+import Snek from '../animations/Snek.js';
 
-
+import Notiflix from 'notiflix';
 
 function Home() {
 
   const [selectedServer, setSelectedServer] = useState(null);
   const [userServers, setUserServers] = useState([]);
+  const [allExistingServers, setAllExistingServers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [userList, setUserList] = useState([]);
-  const [selectedMessages, setSelectedMessages] = useState([]);//This array keeps track of selected messages to be deleted
+  const [selectedMessages, setSelectedMessages] = useState([]); // Tracks messages selected for deletion
   const [selectedServerUsers, setSelectedServerUsers] = useState(null);
   const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
+  const [openJoinServerDialog, setOpenJoinServerDialog] = useState(false);
+  const [openCreateDMDialog, setOpenCreateDMDialog] = useState(false);
   const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
-  const [isDeleteMode, setIsDeleteMode] = useState(false); //This keeps track of delete mode when admin deletes messages
+  const [openRemoveUserDialog, setOpenRemoveUserDialog] = useState(false);
+  const [openChangeRoleDialog, setOpenChangeRoleDialog] = useState(false);  
+  const [isDeleteMode, setIsDeleteMode] = useState(false); // For admin deleting messages
+  const [serverMode, setServerMode] = useState(true);
+  const [openSnek, setOpenSnek] = useState(false);
 
+  // Get the current user from the token
   const token = localStorage.getItem('token');
   const currentUser = jwtDecode(token).id || '';
+  
+  // Set the user's status to online
+  useEffect(() => {
+    if (currentUser) {
+      setUserOnline(currentUser);
+    }
+  }, [currentUser]);
 
   const handleCreateServer = () => {
     setOpenCreateServerDialog(true);
   };
 
-  const clearSelectedMessages = () => {
-    setOpenCreateServerDialog(true);
+  const handleCreateDM = () => {
+    setOpenCreateDMDialog(true);
   };
 
   const handleDeleteModeToggle = () => {
@@ -44,13 +66,56 @@ function Home() {
   }; 
 
   const handleAddUser = () => {
-    
     setOpenAddUserDialog(true);
   };
 
-  
+  const handleRemoveUser = () => {
+    setOpenRemoveUserDialog(true); 
+  };
+
+  const handleChangeRole = () => {
+    setOpenChangeRoleDialog(true);
+  };
+
+  const handleServerModeToggle = () => {
+    setServerMode((prev) => !prev);
+    setSelectedServer(null);
+  }; 
+
+  const handlePlusMenuForServers = () => {
+    Notiflix.Confirm.show(
+      'Start chatting now!',
+      'Please choose action',
+      'Create new server',
+      'Join existing server',
+      function okCb() {
+        handleCreateServer();
+      },
+      function cancelCb() {
+        setOpenJoinServerDialog(true);
+      },
+      {
+        width: '400px',
+        titleFontSize: '20px',
+        titleColor: '#372aac',
+        okButtonColor: '#FFFFFF',
+        okButtonBackground: '#4f39f6',
+        cancelButtonColor: '#FFFFFF',
+        cancelButtonBackground: '#7f22fe',
+      }
+    );
+  }
+
+  const refreshServersAndDMs = () => {
+    if (serverMode === true) {
+      getServers();
+    } else {
+      getDMs();
+    }
+  };
+
   const handleMessageSelect = (id) => {
-    if(id){
+    if (id) {
       setSelectedMessages((prev) => {
         const newSelection = new Set(prev);
         if (newSelection.has(id)) {
@@ -60,13 +125,10 @@ function Home() {
         }
         return Array.from(newSelection);
       });
-    }
-    else if (!id) {
+    } else {
       setSelectedMessages([]);
     }
-    
   };
-  
 
   // Configure firebase connection
   const firebaseConfig = {
@@ -82,13 +144,9 @@ function Home() {
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app)
+  const analytics = getAnalytics(app);
 
-  useEffect(() => {
-    console.log("Toggled!", isDeleteMode);
-  }, [isDeleteMode]);
-
-  //Fetch messages when a server is selected
+  // Fetch messages when a server is selected
   useEffect(() => {
     if (!selectedServer) {
       setMessages([]);
@@ -96,78 +154,101 @@ function Home() {
       return;
     }
     getMessagesForServer();
-    getServerUsers();
+    
+    // Set up a realtime listener for the server's users
+    const db = getDatabase();
+    const usersRef = ref(db, `servers/${selectedServer.id}/users`);
+    const unsubscribe = onValue(usersRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const users = [];
+        snapshot.forEach((child) => {
+          users.push({
+            username: child.key,
+            role: child.val(),
+          });
+        });
+        setSelectedServerUsers(users);
+      } else {
+        setSelectedServerUsers([]);
+      }
+    }, (error) => {
+      console.error('Error fetching server users:', error);
+      setSelectedServerUsers([]);
+    });
+    return () => {
+      unsubscribe();
+    };
   }, [selectedServer]);
-
 
   useEffect(() => {
     if (currentUser) {
-      getServers();
+      if (serverMode === true) {
+        getServers();
+      } else {
+        getDMs();
+      }
       getUsers();
     }
-  }, [currentUser]);
+  }, [currentUser, serverMode]);
 
-
-  function isAdmin() {
-    // If we haven't loaded the server users yet, or currentUser doesn't exist, default to false
-    if (!selectedServerUsers || !currentUser) return false;
-  
-    // Try to find the currentUser in selectedServerUsers
-    const found = selectedServerUsers.find(
-      (u) => u.username === currentUser
-    );
-  
-    // Return true if found user's role is 'admin'
+  function isAdmin(user) {
+    if (!selectedServerUsers || !user) return false;
+    const found = selectedServerUsers.find((u) => u.username === user);
     return found?.role === 'admin';
   }
 
-  
   // Function to fetch messages from Realtime DB
   function getMessagesForServer() {
     const db = getDatabase();
-    const messagesRef = ref(db, `servers/${selectedServer.id}/messages`);
-
-    // Turn off any old listener first, to avoid duplicates if selectedServer changes
+    const messagesRef = serverMode
+      ? ref(db, `servers/${selectedServer.id}/messages`)
+      : ref(db, `directmessages/${selectedServer.id}/messages`);
+  
     off(messagesRef);
-
-    // Real-time listener for this server's messages
+  
     onValue(messagesRef, (snapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.val(); // { msgKey1: {...}, msgKey2: {...} }
-        // Convert to an array
+        const data = snapshot.val();
         const loadedMessages = Object.entries(data).map(([key, msg]) => ({
           id: key,
           ...msg,
         }));
-        // Sort by timestamp ascending if you want chronological order
         loadedMessages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
         setMessages(loadedMessages);
       } else {
         setMessages([]);
       }
     });
+    //console.log(messages);
   }
 
-
-// Function to get the list of servers for the user
+  // Function to get the list of servers for the user
   function getServers() {
     const db = getDatabase();
-    const serversRef = ref(db, `users/${currentUser}/servers`);
+    const serversRef = ref(db, `servers`);
   
     get(serversRef)
       .then((snapshot) => {
         if (snapshot.exists()) {
-          const data = snapshot.val(); // e.g., { 165: "Server Name A", 456: "Server Name B" }
-          
-          // Convert to array of { id, name } objects
-          const serversArray = Object.entries(data).map(([id, name]) => ({ 
-            id, 
-            name 
-          }));
-          
+          const data = snapshot.val();
+          const serverKeys = Object.keys(data);
+          const serversArray = [];
+  
+          serverKeys.forEach((serverId) => {
+            const serverData = data[serverId];
+            if (serverData.users && serverData.users[currentUser]) {
+              serversArray.push({
+                id: serverId,
+                name: serverData.name || 'Unnamed Server',
+              });
+            }
+          });
+  
           setUserServers(serversArray);
+          console.log('Servers array:', serversArray);
+          getAllExistingServers();
         } else {
-          setUserServers([]); // no servers yet
+          setUserServers([]);
         }
       })
       .catch((error) => {
@@ -175,24 +256,108 @@ function Home() {
       });
   }
 
+   // Function to get the list of all servers
+  function getAllExistingServers() {
+    const db = getDatabase();
+    const serversRef = ref(db, `servers`);
+  
+    get(serversRef)
+    .then((snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const serverKeys = Object.keys(data);
+        const serversArray = [];
 
+        serverKeys.forEach((serverId) => {
+          const serverData = data[serverId];
+          serversArray.push({
+            id: serverId,
+            name: serverData.name || 'Unnamed Server',
+          });
+        });
+  
+        setAllExistingServers(serversArray);
+        //console.log('Servers array:', serversArray);
+      } else {
+        setAllExistingServers([]);
+      }
+    })
+    .catch((error) => {
+      console.error('Error fetching servers:', error);
+    });
+  }
+  
+  async function DmNameHelper(DmID) {
+    const db = getDatabase();
+    const usersRef = ref(db, `directmessages/${DmID}/users`);
+    try {
+      const snapshot = await get(usersRef);
+      if (snapshot.exists()) {
+        let firstValidName = null;
+        snapshot.forEach((childSnapshot) => {
+          const username = childSnapshot.key;
+          if (username !== currentUser) {
+            firstValidName = username;
+          }
+        });
+        return firstValidName || '';
+      } else {
+        return '';
+      }
+    } catch (error) {
+      console.error('Error fetching users for this server:', error);
+      return '';
+    }
+  }
+  
+  function getDMs() {
+    const db = getDatabase();
+    const dmsRef = ref(db, 'directmessages');
+    get(dmsRef)
+      .then((snapshot) => {
+        if (!snapshot.exists()) {
+          setUserServers([]);
+          return;
+        }
+        const data = snapshot.val();
+        const dmKeys = Object.keys(data);
+        const dmPromises = dmKeys.map((dmId) => {
+          const dmData = data[dmId];
+          if (dmData.users && dmData.users[currentUser]) {
+            return DmNameHelper(dmId).then((dmName) => {
+              return {
+                id: dmId,
+                name: dmName || 'Unnamed'
+              };
+            });
+          }
+          return null;
+        });
+        return Promise.all(dmPromises);
+      })
+      .then((dmEntries) => {
+        const dmsArray = dmEntries.filter((item) => item !== null);
+        setUserServers(dmsArray);
+        console.log('DM array:', dmsArray);
+      })
+      .catch((error) => {
+        console.error('Error fetching direct messages:', error);
+      });
+  }
+  
   // Function to get the list of all users
   function getUsers() {
     const db = getDatabase();
     const usersRef = ref(db, 'users');
-
     get(usersRef)
       .then((snapshot) => {
         if (snapshot.exists()) {
           const users = [];
-          
-          // iterate over all users and add to array
           snapshot.forEach((child) => {
             users.push(child.key);
           });
-          
           setUserList(users);
-        }else{
+        } else {
           setUserList([]);
         }
       })
@@ -201,27 +366,23 @@ function Home() {
         setUserList([]);
       });
   }
-
+  
   // Function to get the list of the members and admins of current selected server
   function getServerUsers() {
     const db = getDatabase();
     const usersRef = ref(db, `servers/${selectedServer.id}/users`);
-
     get(usersRef)
       .then((snapshot) => {
         if (snapshot.exists()) {
           const users = [];
-          
-          // iterate over all users and add to array
           snapshot.forEach((child) => {
             users.push({
-              username: child.key, // username
-              role: child.val()    // role
+              username: child.key,
+              role: child.val()
             });
           });
-          
           setSelectedServerUsers(users);
-        }else{
+        } else {
           setSelectedServerUsers(null);
         }
       })
@@ -230,60 +391,107 @@ function Home() {
         setSelectedServerUsers(null);
       });
   }
- 
-
+  
   return(
     <div className="flex flex-col min-h-screen">
       <Navbar 
-      user = {currentUser}
+        user={currentUser}
+        serverMode={serverMode}
+        toggleServerMode={handleServerModeToggle}
+        setOpenSnek={setOpenSnek}
       />
-
+  
       <div className="flex flex-1 overflow-hidden">
-
+  
         <Sidebar 
-        servers={userServers} 
-        setSelectedServer={setSelectedServer}
-        openCreateServer={handleCreateServer}
-        selectedServer={selectedServer}
-        className="w-64 min-w-32 flex-shrink-0" 
+          serverMode={serverMode}
+          servers={userServers} 
+          setSelectedServer={setSelectedServer}
+          openPlusMenu={serverMode ? handlePlusMenuForServers : handleCreateDM} 
+          selectedServer={selectedServer}
+          className="w-64 min-w-32 flex-shrink-0" 
         />
-
+  
         <div className="flex-1 flex flex-col overflow-hidden">
           <Chat
             messages={messages}
             selectedServer={selectedServer}
             openAddUser={handleAddUser}
-            isAdmin={isAdmin()}  
+            openRemoveUser={handleRemoveUser}
+            openChangeRole={handleChangeRole}
+            isAdmin={isAdmin(currentUser)}  
             handleMessageSelect={handleMessageSelect}
             selectedMessages={selectedMessages}
-            isDeleteMode = {isDeleteMode}
-            handleDeleteModeToggle = {handleDeleteModeToggle}
-
+            isDeleteMode={isDeleteMode}
+            handleDeleteModeToggle={handleDeleteModeToggle}
+            serverMode={serverMode}
+            currentUser={currentUser}
+            refresh={refreshServersAndDMs}
             className="flex-1 overflow-auto"
-            
           />
         </div>
         
       </div>
-
+  
       {/* Dialogs */}
       <CreateServerPopUp
-              open={openCreateServerDialog}
-              setOpen = {setOpenCreateServerDialog}
-              currentUser={currentUser}
-              userList = {userList}
-            />
+        open={openCreateServerDialog}
+        setOpen={setOpenCreateServerDialog}
+        currentUser={currentUser}
+        userList={userList}
+        refresh={refreshServersAndDMs}
+      />
       
+      <CreateDM
+        open={openCreateDMDialog}
+        setOpen={setOpenCreateDMDialog}
+        currentUser={currentUser}
+        userList={userList}
+        refresh={refreshServersAndDMs}
+        currentDMs={userServers}
+      />
+
+      <JoinServer
+        open={openJoinServerDialog}
+        setOpen={setOpenJoinServerDialog}
+        servers={allExistingServers}
+        currentServers={userServers}
+        currentUser={currentUser}
+        refresh={refreshServersAndDMs}
+      />
+  
       <AddUserPopUp
-              open={openAddUserDialog}
-              setOpen = {setOpenAddUserDialog}
-              serverId={selectedServer?.id || ""}
-              userList = {userList}
-              serverUsers = {selectedServerUsers}
-            />
+        open={openAddUserDialog}
+        setOpen={setOpenAddUserDialog}
+        serverId={selectedServer?.id || ""}
+        userList={userList}
+        serverUsers={selectedServerUsers}
+        updateUserList={getServerUsers}
+      />
+  
+      <RemoveUser
+        open={openRemoveUserDialog}
+        setOpen={setOpenRemoveUserDialog}
+        serverId={selectedServer?.id || ""}
+        serverUsers={selectedServerUsers}
+        updateUserList={getServerUsers}
+      />
+  
+      <ChangeRoleModal
+        open={openChangeRoleDialog}
+        setOpen={setOpenChangeRoleDialog}
+        serverId={selectedServer?.id || ""}
+        serverUsers={selectedServerUsers}
+        getUpdatedRoles={getServerUsers}
+      />
+
+      <Snek
+        open={openSnek}
+        setOpen={setOpenSnek}
+      />
+
     </div>
   );
-
 }
 
-export default Home
+export default Home;

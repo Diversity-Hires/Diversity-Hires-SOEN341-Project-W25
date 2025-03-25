@@ -1,37 +1,58 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
 import Logo from '../images/Logo.png';
+import DmIcon from '../images/DmIcon.png';
+import GcIcon from '../images/GcIcon.png';
+import {setUserOffline} from '../presence';
+import React, { Component } from "react";
+import Switch from "react-switch";
+import { useState } from "react";
 
+
+
+export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek}) {
 
 const navigation = [
-     { name: 'Direct Message', href: '#', current: true },
-//   { name: 'Dashboard', href: '#', current: true },
-//   { name: 'Team', href: '#', current: false },
-//   { name: 'Projects', href: '#', current: false },
-//   { name: 'Calendar', href: '#', current: false },
-//   { name: 'Reports', href: '#', current: false },
+
+    { name: 'Servers', href: '#', current: true, icon: GcIcon}, // use GcIcon import
+    { name: 'DM', href: '#', current: false, icon: DmIcon}, //use DmIcon import
+   
 ]
 
-const logout = () => {
+const logout = async () => {
+    await setUserOffline(user); // Wait for the offline update
     localStorage.removeItem('token');
     window.location.href = '/';
   };
 
-const userNavigation = [
-  { name: 'Your Profile', href: '#' },
-  { name: 'Settings', href: '#' },
-  { name: 'Sign out', onClick: logout },
-]
+  const ActiveToggleSwitch = () => {
+    const [isActive, setIsActive] = useState(false);
+  
+    return (
+      <div className="flex items-center justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <span className="text-gray-900 font-medium">Invisible</span>
+        <Switch
+          checked={isActive}
+          onChange={() => setIsActive(!isActive)}
+          offColor="#ccc"
+          onColor="#0f0"
+          className="react-switch"
+        />
+      </div>
+    );
+  };
 
+const userNavigation = [
+    { name: 'Your Profile', href: '#' },
+    { name: 'Settings', href: '#' },
+    { name:'Invisible',component: () => <ActiveToggleSwitch /> }, 
+    { name: 'Sign out', onClick: logout },
+];
 
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
-
-export default function Navbar({user}) {
-
-
     return (
         <>
             <div className="min-h-full">
@@ -45,26 +66,51 @@ export default function Navbar({user}) {
                         <div className="flex items-center">
                             <div className="shrink-0">
                                 <img
-                                    alt="Your Company"
+                                    alt="ChatHaven Logo"
                                     src={Logo}
                                     className="h-12 md:h-14 lg:h-16 xl:h-20 mr-2 ml-3"
                                 />
                             </div>
                             <div className="hidden md:block">
-                            <div className="ml-10 flex items-baseline space-x-4">
-                                {navigation.map((item) => (
+                            <div className="ml-10 flex items-baseline space-x-2">
+
+                            {navigation.map((item) => {
+
+                                // Determine if this item is active based on serverMode
+                                const isActive = (item.name === 'Servers' && serverMode) || (item.name === 'DM' && !serverMode);
+
+                                return (
                                 <a
                                     key={item.name}
-                                    href={item.href}
-                                    aria-current={item.current ? 'page' : undefined}
+                                    onClick={(e) => {
+                                    e.preventDefault();
+                                    // Toggle serverMode to true if 'Servers' was clicked, false if 'DM'
+                                    if( (item.name === 'Servers' && !serverMode) || (item.name === 'DM' && serverMode) ){
+                                        toggleServerMode();
+                                    }
+
+
+                                    }}
+                                    aria-current={isActive ? 'page' : undefined}
                                     className={classNames(
-                                    item.current ? 'bg-violet-800 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                                    'rounded-md px-3 py-2 text-sm',
+                                    isActive
+                                        ? 'bg-blue-200 text-violet-700'
+                                        : 'text-violet-700 hover:bg-blue-200 hover:text-white',
+                                    'rounded-md text-sm mx-3 my-2'
                                     )}
                                 >
+                                    <div className="flex justify-center items-center gap-1 mx-3 my-2">
                                     {item.name}
+                                    <img
+                                        alt={`${item.name} Icon`}
+                                        src={item.icon}
+                                        className="h-6"
+                                    />
+                                    </div>
                                 </a>
-                                ))}
+                                );
+                            })}
+
                             </div>
                         </div>
                     </div>
@@ -74,7 +120,7 @@ export default function Navbar({user}) {
                         <div className="ml-4 flex items-center md:ml-6">
                         <button
                             type="button"
-                            className="relative rounded-full p-1 text-violet-800 hover:text-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden"
+                            className="relative rounded-full p-1 text-violet-800 hover:text-white" // focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
                         >
                             <span className="absolute -inset-1.5" />
                             <span className="sr-only">View notifications</span>
@@ -84,7 +130,8 @@ export default function Navbar({user}) {
                         {/* Profile dropdown */}
                         <Menu as="div" className="relative ml-3">
                             
-                                <MenuButton className="relative flex max-w-xs items-center rounded-full hover:text-white text-sm focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden">
+                                <MenuButton className="relative flex max-w-xs items-center rounded-full hover:text-white text-sm" //focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
+                                >
                                     <span className="absolute -inset-1.5" />
                                     <span className="sr-only">Open user menu</span>
                                     <div className="flex justify center items-center gap-2">
@@ -102,7 +149,9 @@ export default function Navbar({user}) {
                             
                             {userNavigation.map((item) => (
                                 <MenuItem key={item.name}>
-                                    {item.onClick ? (
+                                    {item.component ? (
+                                    item.component()
+                                    ) : item.onClick ? (
                                     <button
                                         onClick={item.onClick}
                                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -133,7 +182,8 @@ export default function Navbar({user}) {
                   <div className="-mr-2 flex md:hidden">
     
                     {/* Mobile menu button */}
-                    <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden">
+                    <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white" //focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
+                    >
                       <span className="absolute -inset-0.5" />
                       <span className="sr-only">Open main menu</span>
                       <Bars3Icon aria-hidden="true" className="block size-6 group-data-open:hidden" />
@@ -171,7 +221,7 @@ export default function Navbar({user}) {
                         </div>
                         <button
                         type="button"
-                        className="relative ml-auto shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden"
+                        className="relative ml-auto shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white" //focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
                         >
                         <span className="absolute -inset-1.5" />
                         <span className="sr-only">View notifications</span>
@@ -187,7 +237,7 @@ export default function Navbar({user}) {
                                 onClick={item.onClick ? item.onClick : undefined}
                                 className="block w-full text-left rounded-md px-3 py-2 text-base text-gray-400 hover:bg-gray-700 hover:text-white"
                             >
-                                {item.name}
+                                {item.component ? item.component() : item.name}
                             </DisclosureButton>
                             ))}
 
@@ -195,7 +245,9 @@ export default function Navbar({user}) {
                     </div>
                 </DisclosurePanel>
                 </Disclosure>
-    
+                
+
+
     
             </div>
         </>
