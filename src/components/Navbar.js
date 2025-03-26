@@ -7,12 +7,14 @@ import {setUserOffline, isUserAway, toggleUserAway} from '../presence';
 import React, { Component, useEffect } from "react";
 import Switch from "react-switch";
 import { useState } from "react";
+import ViewRequests from '../components/ViewRequests'
 
 
 
-export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek}) {
+export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek, joinRequestsForUser, getRequests}) {
 
     const [isAway, setIsAway] = useState(null);
+    const [openViewRequests, setOpenViewRequests] = useState(false);
 
     // Set isAway to the away status of the user
     useEffect(() => {
@@ -21,6 +23,10 @@ export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek}
           .catch(err => console.error(err));
       }, [user, serverMode]);
 
+
+    const handleViewRequests = () => {
+    setOpenViewRequests(true);
+    };
 
     const logout = () => {
         setUserOffline(user); // Wait for the offline update
@@ -60,11 +66,8 @@ export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek}
             />
         </div>
         );
-    };
+    }
 
-    const toggleAwayHelper = () => {
-       
-    };
 
 
     function classNames(...classes) {
@@ -97,7 +100,7 @@ export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek}
                             {navigation.map((item) => {
 
                                 // Determine if this item is active based on serverMode
-                                const isAway = (item.name === 'Servers' && serverMode) || (item.name === 'DM' && !serverMode);
+                                const isActive = (item.name === 'Servers' && serverMode) || (item.name === 'DM' && !serverMode);
 
                                 return (
                                 <a
@@ -111,9 +114,9 @@ export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek}
 
 
                                     }}
-                                    aria-current={isAway ? 'page' : undefined}
+                                    aria-current={isActive ? 'page' : undefined}
                                     className={classNames(
-                                    isAway
+                                    isActive
                                         ? 'bg-blue-200 text-violet-700'
                                         : 'text-violet-700 hover:bg-blue-200 hover:text-white',
                                     'rounded-md text-sm mx-3 my-2'
@@ -140,11 +143,15 @@ export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek}
                         <div className="ml-4 flex items-center md:ml-6">
                         <button
                             type="button"
-                            className="relative rounded-full p-1 text-violet-800 hover:text-white" // focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
+                            onClick={handleViewRequests}
+                            className={`relative rounded-full p-1 text-violet-800 hover:text-white ${joinRequestsForUser.length > 0 ? 'bg-rose-500 rounded-3xl': ''}`} // focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
                         >
                             <span className="absolute -inset-1.5" />
                             <span className="sr-only">View notifications</span>
-                            <BellIcon aria-hidden="true" className="size-6" />
+                            <BellIcon 
+                                aria-hidden="true" 
+                                className="size-6"
+                            />
                         </button>
     
                         {/* Profile dropdown */}
@@ -266,7 +273,13 @@ export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek}
                 </DisclosurePanel>
                 </Disclosure>
                 
-
+                <ViewRequests
+                    open={openViewRequests}
+                    setOpen={setOpenViewRequests}
+                    requests={joinRequestsForUser}
+                    currentUser={user}
+                    refresh={getRequests}
+                />
 
     
             </div>

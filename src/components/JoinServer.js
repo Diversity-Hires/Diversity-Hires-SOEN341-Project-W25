@@ -101,38 +101,6 @@ export default function JoinServer({ open, setOpen, servers, currentServers, cur
     };
 
 
-    //Create group on form submit
-    const handleSubmit = async (event) => {
-        // event.preventDefault();
-        // try {
-        // await axios.post(
-        //     `${API_URL}/new-dm`,
-        //     {
-        //     users: [currentUser, selectedUserToDM],
-        //     },
-        //     {
-        //     headers: {
-        //         Authorization: `Bearer ${token}`,
-        //         'Content-Type': 'application/json',
-        //         'x-api-key': API_KEY,
-        //     },
-        //     }
-        // );
-
-        // Notiflix.Notify.success('You can now DM this person!');
-        // setSelectedUserToDM('');
-        // setSearch('');
-        // refresh();
-        // setOpen(false);
-        // } catch (error) {
-        // Notiflix.Notify.failure(
-        //     error.response?.data?.message || 'Failed to create DM.'
-        // );
-        // console.error('DM creation error:', error);
-        // }
-    };
-
-
     return (
         <Transition show={open} as={Fragment}>
         <Dialog as="div" className="relative z-30" onClose={() => setOpen(false)}>
