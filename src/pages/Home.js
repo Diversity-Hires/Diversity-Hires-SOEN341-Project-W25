@@ -32,20 +32,22 @@ function Home() {
   const [userList, setUserList] = useState([]);
   const [selectedMessages, setSelectedMessages] = useState([]); // Tracks messages selected for deletion
   const [selectedServerUsers, setSelectedServerUsers] = useState(null);
+  const [isDeleteMode, setIsDeleteMode] = useState(false); // For admin deleting messages
+  const [serverMode, setServerMode] = useState(true);
+  const [joinRequestsForUser , setJoinRequestsForUser] = useState([]);
+
   const [openCreateServerDialog, setOpenCreateServerDialog] = useState(false);
   const [openJoinServerDialog, setOpenJoinServerDialog] = useState(false);
   const [openCreateDMDialog, setOpenCreateDMDialog] = useState(false);
   const [openAddUserDialog, setOpenAddUserDialog] = useState(false);  
   const [openRemoveUserDialog, setOpenRemoveUserDialog] = useState(false);
   const [openChangeRoleDialog, setOpenChangeRoleDialog] = useState(false);  
-  const [isDeleteMode, setIsDeleteMode] = useState(false); // For admin deleting messages
-  const [serverMode, setServerMode] = useState(true);
   const [openSnek, setOpenSnek] = useState(false);
 
   // Get the current user from the token
   const token = localStorage.getItem('token');
   const currentUser = jwtDecode(token).id || '';
-  
+
   // Set the user's status to online
   useEffect(() => {
     if (currentUser) {
@@ -154,6 +156,7 @@ function Home() {
       return;
     }
     getMessagesForServer();
+    getJoinRequestsForUser();
     
     // Set up a realtime listener for the server's users
     const db = getDatabase();
@@ -190,6 +193,8 @@ function Home() {
       getUsers();
     }
   }, [currentUser, serverMode]);
+
+
 
   function isAdmin(user) {
     if (!selectedServerUsers || !user) return false;
@@ -286,7 +291,61 @@ function Home() {
       console.error('Error fetching servers:', error);
     });
   }
+
+
+  // Function to fetch join requests for the servers the user is an admin of
+  function getJoinRequestsForUser() {
+    const db = getDatabase();
+    // We'll store requests by server so if multiple servers update, we combine them.
+    const requestsByServer = {};
+
+    userServers.forEach((server) => {
+      // Fetch the array of users and roles for this server
+      if(serverMode){
+        getServerUsers(server.id).then((serverUsers) => {
+          // Check if currentUser is admin for this server (similar to isAdmin logic)
+          const isUserAdmin = serverUsers.some((u) => u.username === currentUser && u.role === 'admin');
+          if (isUserAdmin) {
+            // Listen for changes in real-time to the requests for this server.
+            const requestsRef = ref(db, `servers/${server.id}/requests`);
+            // Detach any existing listeners for this path to avoid duplication.
+            off(requestsRef);
+
+            onValue(requestsRef, (snapshot) => {
+              if (snapshot.exists()) {
+                const data = snapshot.val();
+                // Transform the request objects into an array including all required info.
+                const requestsArray = Object.entries(data).map(([key, requestData]) => ({
+                  username: key,
+                  timestamp: requestData.timestamp || 0,
+                  serverName: server.name,
+                  serverId: server.id
+                }));
+                // Store requests for this server.
+                requestsByServer[server.id] = requestsArray;
+              } else {
+                // No requests for this server.
+                requestsByServer[server.id] = [];
+              }
+
+              // Combine all requests from the servers where user is admin.
+              const allRequests = Object.values(requestsByServer).flat();
+              // Update the state with these combined requests.
+              console.log("Requests for "+currentUser+": ",allRequests);
+              setJoinRequestsForUser(allRequests);
+            });
+          } else {
+            // If not admin, ensure we clear out any previous data for this server.
+            requestsByServer[server.id] = [];
+          }
+        }).catch((err) => {
+          console.error(`Error fetching users for server ${server.id}:`, err);
+        });
+      }
+    });
+  }
   
+
   async function DmNameHelper(DmID) {
     const db = getDatabase();
     const usersRef = ref(db, `directmessages/${DmID}/users`);
@@ -367,8 +426,8 @@ function Home() {
       });
   }
   
-  // Function to get the list of the members and admins of current selected server
-  function getServerUsers() {
+  // Function to update the list of the members and admins of the current server
+  function updateServerUsers() {
     const db = getDatabase();
     const usersRef = ref(db, `servers/${selectedServer.id}/users`);
     get(usersRef)
@@ -387,10 +446,36 @@ function Home() {
         }
       })
       .catch((error) => {
-        console.error('Error fetching users for this server:', error);
+        console.error('Error updating users for this server:', error);
         setSelectedServerUsers(null);
       });
   }
+
+
+  // Function to get the list of the members and admins of a server
+  function getServerUsers(serverId) {
+    const db = getDatabase();
+    const usersRef = ref(db, `servers/${serverId}/users`);
+    return get(usersRef)
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          const users = [];
+          snapshot.forEach((child) => {
+            users.push({
+              username: child.key,
+              role: child.val()
+            });
+          });
+          return users;
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching users for this server:', error);
+        return [];
+      });
+  }
+
+
   
   return(
     <div className="flex flex-col min-h-screen">
@@ -399,6 +484,8 @@ function Home() {
         serverMode={serverMode}
         toggleServerMode={handleServerModeToggle}
         setOpenSnek={setOpenSnek}
+        joinRequestsForUser={joinRequestsForUser}
+        getRequests={getJoinRequestsForUser}
       />
   
       <div className="flex flex-1 overflow-hidden">
@@ -466,7 +553,7 @@ function Home() {
         serverId={selectedServer?.id || ""}
         userList={userList}
         serverUsers={selectedServerUsers}
-        updateUserList={getServerUsers}
+        updateUserList={updateServerUsers}
       />
   
       <RemoveUser
@@ -474,7 +561,7 @@ function Home() {
         setOpen={setOpenRemoveUserDialog}
         serverId={selectedServer?.id || ""}
         serverUsers={selectedServerUsers}
-        updateUserList={getServerUsers}
+        updateUserList={updateServerUsers}
       />
   
       <ChangeRoleModal
@@ -482,7 +569,7 @@ function Home() {
         setOpen={setOpenChangeRoleDialog}
         serverId={selectedServer?.id || ""}
         serverUsers={selectedServerUsers}
-        getUpdatedRoles={getServerUsers}
+        getUpdatedRoles={updateServerUsers}
       />
 
       <Snek
