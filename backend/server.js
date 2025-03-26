@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const helmet = require('helmet');
+const axios = require('axios');
 
 const app = express();
 
@@ -720,6 +721,122 @@ app.post('/api/servers/join', apiKeyMiddleware, authMiddleware, async (req, res)
     return res.status(500).json({ message: 'Server error.' });
   }
 });
+
+
+
+// Accept a request to join a server
+app.post('/api/servers/request/accept', apiKeyMiddleware, authMiddleware, async (req, res) => {
+  try {
+    const { username, serverId } = req.body;
+
+    // Validate input
+    if (!serverId || !username) {
+      return res.status(400).json({ message: 'Missing username or serverId.' });
+    }
+
+    // Check if the server exists
+    const serverRef = db.ref(`servers/${serverId}`);
+    const serverSnapshot = await serverRef.once('value');
+    if (!serverSnapshot.exists()) {
+      return res.status(404).json({ message: 'Server not found.' });
+    }
+
+    // Check if the user is already part of the server
+    const userRef = serverRef.child('users').child(username);
+    const userSnapshot = await userRef.once('value');
+    if (userSnapshot.exists()) {
+      // If the user is listed in server's users node, they are already a member
+      return res.status(403).json({ message: 'User is already a member of this server.' });
+    }
+
+    // Check if the request exists
+    const requestRef = serverRef.child('requests').child(username);
+    const requestSnapshot = await requestRef.once('value');
+    if (!requestSnapshot.exists()) {
+      // If there is no request with the same username then exit
+      return res.status(403).json({ message: 'No request was found for this user and server.' });
+    }
+
+    // Remove the request with {username} as its key from servers/{serverId}/requests
+    await requestRef.remove();
+
+    // axios POST request to 'http://localhost:5002/api/servers/add-user' containing serverId and username
+    await axios.post('http://localhost:5002/api/servers/add-user', {
+      serverId,
+      username,
+    }, 
+    {
+      headers: {
+        Authorization: req.headers['authorization'],
+        'x-api-key': req.headers['x-api-key'],   
+      }
+    }
+    );
+
+
+    // Return success
+    return res.status(201).json({
+      message: `Request was accepted successfully!`,
+      data: {
+        username,
+        serverId
+      }
+    });
+
+  } catch (error) {
+    console.error('Error accepting request to join server:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+
+
+
+// Deny a request to join a server
+app.post('/api/servers/request/deny', apiKeyMiddleware, authMiddleware, async (req, res) => {
+  try {
+    const { username, serverId } = req.body;
+
+    // Validate input
+    if (!serverId || !username) {
+      return res.status(400).json({ message: 'Missing username or serverId.' });
+    }
+
+    // Check if the server exists
+    const serverRef = db.ref(`servers/${serverId}`);
+    const serverSnapshot = await serverRef.once('value');
+    if (!serverSnapshot.exists()) {
+      return res.status(404).json({ message: 'Server not found.' });
+    }
+
+    // Check if the request exists
+    const requestRef = serverRef.child('requests').child(username);
+    const requestSnapshot = await requestRef.once('value');
+    if (!requestSnapshot.exists()) {
+      // If there is no request with the same username then exit
+      return res.status(403).json({ message: 'No request was found for this user and server.' });
+    }
+
+    // Remove the request with {username} as its key from servers/{serverId}/requests
+    await requestRef.remove();
+
+    // Return success
+    return res.status(201).json({
+      message: `Request was denied for ${username}`,
+      data: {
+        username,
+        serverId
+      }
+    });
+
+  } catch (error) {
+    console.error('Error denying request to join server:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+
+
 
 
 
