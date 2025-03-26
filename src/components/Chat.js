@@ -243,7 +243,7 @@ export default function Chat({
               }`}
             >
               <div>
-                <span className="text-violet-800 font-semibold">{msg.username}</span>
+                <span className={`${currentUser===msg.username ? 'text-sky-700' : 'text-violet-800'} font-semibold`}>{msg.username}</span>
                 <span className="ml-2 text-indigo-700">{msg.text}</span>
               </div>
               <div className="text-xs text-gray-500">{formattedTimestamp}</div>
