@@ -119,38 +119,42 @@ export default function ChangeRoleModal({ open, setOpen, serverId, serverUsers, 
 
                         {/* User Dropdown */}
                         <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                        <dt className="text-sm text-gray-900">
-                            Select User
-                        </dt>
-                        <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
-                            <select
-                            id="username"
-                            name="username"
-                            value={groupData.username}
-                            onChange={handleInputChange}
-                            className="w-full rounded-md px-3 py-1.5 bg-gray-50 outline outline-1 outline-gray-300 focus:outline-indigo-600"
-                            >
-                            {/* Dummy default option */}
-                            <option value="" disabled>
-                                -- Select a user --
-                            </option>
+                          <label 
+                            htmlFor="username"
+                            className="text-sm text-gray-900">
+                              Select User
+                          </label>
+                          <div className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
+                              <select
+                              id="username"
+                              name="username"
+                              value={groupData.username}
+                              onChange={handleInputChange}
+                              className="w-full rounded-md px-3 py-1.5 bg-gray-50 outline outline-1 outline-gray-300 focus:outline-indigo-600"
+                              >
+                              {/* Dummy default option */}
+                              <option value="" disabled>
+                                  -- Select a user --
+                              </option>
 
-                            {/* Actual user options */}
-                            {(serverUsers||[]).map((user, index) => (
-                                <option key={index} value={user.username}>
-                                  {`${user.username} (${user.role})`}
-                                </option>
-                            ))}
-                            </select>
-                        </dd>
+                              {/* Actual user options */}
+                              {(serverUsers||[]).map((user, index) => (
+                                  <option key={index} value={user.username}>
+                                    {`${user.username} (${user.role})`}
+                                  </option>
+                              ))}
+                              </select>
+                          </div>
                         </div>
 
                       {/* Role Dropdown */}
                       <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                        <dt className="text-sm text-gray-900">
+                        <label 
+                          htmlFor="role"
+                          className="text-sm text-gray-900">
                           Select New Role
-                        </dt>
-                        <dd className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
+                        </label>
+                        <div className="mt-1 text-sm text-gray-700 sm:col-span-2 sm:mt-0">
                           <select
                             id="role"
                             name="role"
@@ -161,7 +165,7 @@ export default function ChangeRoleModal({ open, setOpen, serverId, serverUsers, 
                             <option value="member">Member</option>
                             <option value="admin">Admin</option>
                           </select>
-                        </dd>
+                        </div>
                       </div>
                     </dl>
 

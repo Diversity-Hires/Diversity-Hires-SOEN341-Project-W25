@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Dropdown from './Admin_DropDown';
+import AdminDropdown from './Admin_DropDown';
 import p5 from 'p5';
 // import { db } from '../firebase'; // Firebase config
 // import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -182,7 +182,7 @@ export default function Chat({
               <button ref={buttonRef} onClick={() => setOpen(!open)}>
                 <Cog6ToothIcon className="h-6 w-6 cursor-pointer hover:text-blue-500" />
               </button>
-              <Dropdown
+              <AdminDropdown
                 open={open}
                 setOpen={setOpen}
                 deleteMessages={deleteMessages}
