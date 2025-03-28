@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import ChangeRoleModal from "./ChangeRoleModal"; // Import the Change Role modal
 
-export default function Dropdown({ open, setOpen, buttonRef, deleteMessages, selectedMessages, isDeleteMode, handleMessageSelect, handleDeleteModeToggle, serverId, openChangeRole }) {
+export default function AdminDropdown({ open, setOpen, buttonRef, deleteMessages, selectedMessages, isDeleteMode, handleMessageSelect, handleDeleteModeToggle, serverId, openChangeRole }) {
   const dropdownRef = useRef(null);
   //console.log("Users in dropdown:", users);
 
