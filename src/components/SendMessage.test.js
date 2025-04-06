@@ -25,12 +25,13 @@ jest.mock('../animations/Bubbles', () => {
   };
 });
 
-// Mock heroicons
+// Mock heroicons - include all icons including LanguageIcon
 jest.mock('@heroicons/react/24/outline', () => ({
   UserPlusIcon: () => <svg data-testid="user-plus-icon" />,
   UserMinusIcon: () => <svg data-testid="user-minus-icon" />,
   Cog6ToothIcon: () => <svg data-testid="cog-icon" />,
-  ArrowRightStartOnRectangleIcon: () => <svg data-testid="arrow-icon" />
+  ArrowRightStartOnRectangleIcon: () => <svg data-testid="arrow-icon" />,
+  LanguageIcon: () => <svg data-testid="language-icon" />
 }));
 
 // Mock the headlessui components
@@ -112,8 +113,9 @@ describe('Chat Component (Server Message Functionality)', () => {
     // Setup environment variables that the component needs
     process.env = {
       ...process.env,
-      REACT_APP_API_URL: 'undefined', // This matches what's shown in your error
-      REACT_APP_API_KEY: undefined  // This matches what's shown in your error
+      REACT_APP_API_URL: 'undefined',
+      REACT_APP_API_KEY: undefined,
+      REACT_APP_OPENAI_API_KEY: 'test-openai-key'
     };
   });
   
@@ -132,7 +134,7 @@ describe('Chat Component (Server Message Functionality)', () => {
     expect(screen.getByPlaceholderText('Type a message...')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Send/i })).toBeInTheDocument();
     
-    // Check if messages are displayed
+    // Check if messages are displayed - only test basic content
     expect(screen.getByText('Hello')).toBeInTheDocument();
     expect(screen.getByText('Hi there')).toBeInTheDocument();
   });
@@ -142,5 +144,49 @@ describe('Chat Component (Server Message Functionality)', () => {
     
     // Check for placeholder text
     expect(screen.getByText('Select a server to start chatting')).toBeInTheDocument();
+  });
+  
+  test('shows placeholder when no friend is selected in DM mode', () => {
+    render(<Chat {...defaultProps} selectedServer={null} serverMode={false} />);
+    
+    // Check for placeholder text
+    expect(screen.getByText('Select a friend to start chatting with')).toBeInTheDocument();
+  });
+
+  test('allows sending a new message', async () => {
+    axios.post.mockResolvedValueOnce({ data: { success: true } });
+    
+    render(<Chat {...defaultProps} />);
+    
+    // Type a message
+    const input = screen.getByPlaceholderText('Type a message...');
+    fireEvent.change(input, { target: { value: 'New test message' } });
+    
+    // Send the message
+    const sendButton = screen.getByRole('button', { name: /Send/i });
+    fireEvent.click(sendButton);
+    
+    // Verify axios post was called with correct parameters
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        'undefined/servers/messages',
+        {
+          text: 'New test message',
+          serverId: '123'
+        },
+        {
+          headers: {
+            Authorization: 'Bearer fake-jwt-token',
+            'x-api-key': undefined
+          }
+        }
+      );
+    });
+    
+    // Instead of checking the input value directly, 
+    // Check that setNewMessage was called with an empty string
+    await waitFor(() => {
+      expect(input.value).toBe('');
+    });
   });
 });

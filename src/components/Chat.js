@@ -7,7 +7,8 @@ import {
   UserPlusIcon,
   UserMinusIcon,
   Cog6ToothIcon,
-  ArrowRightStartOnRectangleIcon
+  ArrowRightStartOnRectangleIcon,
+  LanguageIcon
 } from '@heroicons/react/24/outline';
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import Bubbles from '../animations/Bubbles';
@@ -17,6 +18,7 @@ import UserStatusIndicator from './UserStatusIndicator';
 
 const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
+const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY; // Add this to your .env file
 
 export default function Chat({
   messages,
@@ -38,6 +40,12 @@ export default function Chat({
   const [open, setOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState('');
   const buttonRef = useRef(null);
+  // Add state for translated messages
+  const [translatedMessages, setTranslatedMessages] = useState({});
+  // Add state to track which messages are currently showing translations
+  const [showingTranslations, setShowingTranslations] = useState({});
+  // Add state for translation loading
+  const [translationLoading, setTranslationLoading] = useState({});
 
   const token = localStorage.getItem('token');
 
@@ -131,6 +139,70 @@ export default function Chat({
       );
       console.error('User removal error:', error);
     }
+  };
+
+  // Function to translate a message
+  const translateMessage = async (messageId, messageText) => {
+    // Set loading state for this message
+    setTranslationLoading(prev => ({ ...prev, [messageId]: true }));
+    
+    try {
+      const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a translator. Translate the following text to French. Return only the translated text without any additional explanation.'
+            },
+            {
+              role: 'user',
+              content: messageText
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 1000
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      // Get the translated text from the response
+      const translatedText = response.data.choices[0].message.content.trim();
+      
+      // Store the translated text
+      setTranslatedMessages(prev => ({
+        ...prev,
+        [messageId]: translatedText
+      }));
+      
+      // Show the translation
+      setShowingTranslations(prev => ({
+        ...prev,
+        [messageId]: true
+      }));
+      
+      Notiflix.Notify.success('Message translated successfully');
+    } catch (error) {
+      console.error('Translation error:', error);
+      Notiflix.Notify.failure('Failed to translate message');
+    } finally {
+      // Clear loading state
+      setTranslationLoading(prev => ({ ...prev, [messageId]: false }));
+    }
+  };
+
+  // Function to toggle between original and translated message
+  const toggleTranslation = (messageId) => {
+    setShowingTranslations(prev => ({
+      ...prev,
+      [messageId]: !prev[messageId]
+    }));
   };
 
   return (
@@ -229,6 +301,14 @@ export default function Chat({
           const month = String(dateObj.getMonth() + 1).padStart(2, '0');
           const year = String(dateObj.getFullYear()).slice(-2);
           const formattedTimestamp = `${hours}:${minutes} ${day}/${month}/${year}`;
+          
+          // Determine whether to show original or translated text
+          const messageContent = showingTranslations[msg.id] 
+            ? translatedMessages[msg.id] 
+            : msg.text;
+          
+          // Determine if this message is in the process of being translated
+          const isTranslating = translationLoading[msg.id];
 
           return (
             <div
@@ -242,9 +322,44 @@ export default function Chat({
                 selectedMessages.includes(msg.id) ? 'bg-red-200' : 'bg-indigo-100'
               }`}
             >
-              <div>
-                <span className={`${currentUser===msg.username ? 'text-sky-700' : 'text-violet-800'} font-semibold`}>{msg.username}</span>
-                <span className="ml-2 text-indigo-700">{msg.text}</span>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <span className={`${currentUser===msg.username ? 'text-sky-700' : 'text-violet-800'} font-semibold`}>{msg.username}</span>
+                  <span className="ml-2 text-indigo-700">
+                    {isTranslating 
+                      ? <span className="italic text-gray-500">Translating...</span> 
+                      : messageContent}
+                  </span>
+                </div>
+                
+                {/* Translation button */}
+                <div className="ml-2 flex items-center">
+                  {translatedMessages[msg.id] ? (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTranslation(msg.id);
+                      }}
+                      className="text-xs text-sky-600 hover:text-sky-800 p-1"
+                    >
+                      {showingTranslations[msg.id] ? 'Original' : 'French'}
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isTranslating && !translatedMessages[msg.id]) {
+                          translateMessage(msg.id, msg.text);
+                        }
+                      }}
+                      disabled={isTranslating}
+                      className="text-xs flex items-center text-sky-600 hover:text-sky-800 p-1"
+                    >
+                      <LanguageIcon className="h-4 w-4 mr-1" />
+                      
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="text-xs text-gray-500">{formattedTimestamp}</div>
             </div>
