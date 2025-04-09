@@ -42,8 +42,8 @@ export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek,
     ]
 
     const userNavigation = [
-        { name: 'Your Profile', href: '#' },
-        { name: 'Settings', onClick: setOpenSnek },
+        // { name: 'Your Profile', href: '#' },
+        // { name: 'Settings', onClick: setOpenSnek },
         { name: 'Away', component: () => <ActiveToggleSwitch /> }, 
         { name: 'Sign out', onClick: logout },
     ];
