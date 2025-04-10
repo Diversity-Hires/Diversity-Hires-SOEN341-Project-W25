@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar.js'
 import Chat from '../components/Chat.js'
 import { jwtDecode } from 'jwt-decode';
 import { waitFor } from '@testing-library/react'
+import axios from 'axios';
 
 // imports for front-end access to Firebase DB
 import { initializeApp } from "firebase/app";
@@ -22,6 +23,9 @@ import JoinServer from '../components/JoinServer.js';
 import Snek from '../animations/Snek.js';
 
 import Notiflix from 'notiflix';
+
+const API_URL = process.env.REACT_APP_API_URL;
+const API_KEY = process.env.REACT_APP_API_KEY;
 
 function Home() {
 
@@ -475,6 +479,33 @@ function Home() {
       });
   }
 
+  async function sendSnekScore(score){
+    if (score <= 0){
+      return 
+    }
+    try {
+      const destinationRef = serverMode
+        ? `${API_URL}/servers/messages`
+        : `${API_URL}/dms/messages`;
+
+      await axios.post(
+        destinationRef,
+        {
+          text: `Just scored ${score} in Snek. Try beating it!`,
+          serverId: selectedServer.id
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'x-api-key': API_KEY
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
 
   
   return(
@@ -514,6 +545,7 @@ function Home() {
             serverMode={serverMode}
             currentUser={currentUser}
             refresh={refreshServersAndDMs}
+            setOpenSnek={setOpenSnek}
             className="flex-1 overflow-auto"
           />
         </div>
@@ -575,6 +607,7 @@ function Home() {
       <Snek
         open={openSnek}
         setOpen={setOpenSnek}
+        sendSnekScore={sendSnekScore}
       />
 
     </div>

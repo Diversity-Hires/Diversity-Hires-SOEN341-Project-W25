@@ -15,6 +15,7 @@ import Bubbles from '../animations/Bubbles';
 import axios from 'axios';
 import Notiflix from 'notiflix';
 import UserStatusIndicator from './UserStatusIndicator';
+import { ReactComponent as GameIcon } from '../images/sports_esports_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg'
 
 const API_URL = process.env.REACT_APP_API_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
@@ -34,7 +35,8 @@ export default function Chat({
   getUpdatedRoles,
   serverMode,
   currentUser,
-  refresh
+  refresh,
+  setOpenSnek
 }) {
   const [newMessage, setNewMessage] = useState('');
   const [open, setOpen] = useState(false);
@@ -271,24 +273,35 @@ export default function Chat({
           )}
         </div>
 
-        {/* If in server mode, show a button to leave the server */}
-        {serverMode && (
+        <div>
           <button
-            className="cursor-pointer hover:text-blue-500"
-            onClick={() =>
-              Notiflix.Confirm.show(
-                'Please Confirm',
-                `Are you sure you want to leave ${selectedServer.name}?`,
-                'Yes',
-                'No',
-                () => removeUser(currentUser),
-                () => {}
-              )
-            }
-          >
-            <ArrowRightStartOnRectangleIcon className="h-6 w-6 mr-2" />
-          </button>
-        )}
+              className="cursor-pointer hover:text-blue-500"
+              onClick={() =>
+                setOpenSnek(true)
+              }
+            >
+              <GameIcon className="h-6 w-6 mr-3" />
+            </button>
+
+          {/* If in server mode, show a button to leave the server */}
+          {serverMode && (
+            <button
+              className="cursor-pointer hover:text-blue-500"
+              onClick={() =>
+                Notiflix.Confirm.show(
+                  'Please Confirm',
+                  `Are you sure you want to leave ${selectedServer.name}?`,
+                  'Yes',
+                  'No',
+                  () => removeUser(currentUser),
+                  () => {}
+                )
+              }
+            >
+              <ArrowRightStartOnRectangleIcon className="h-6 w-6 mr-2" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Messages display */}
