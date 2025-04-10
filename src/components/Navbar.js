@@ -4,9 +4,8 @@ import Logo from '../images/Logo.png';
 import DmIcon from '../images/DmIcon.png';
 import GcIcon from '../images/GcIcon.png';
 import {setUserOffline, isUserAway, toggleUserAway} from '../presence';
-import React, { Component, useEffect } from "react";
+import React, { Component, useEffect, useState} from "react";
 import Switch from "react-switch";
-import { useState } from "react";
 import ViewRequests from '../components/ViewRequests'
 
 
