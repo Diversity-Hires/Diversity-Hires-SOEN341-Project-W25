@@ -4,11 +4,14 @@ import { motion } from 'framer-motion';
 import ReactP5Wrapper from 'react-p5';
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
-export default function SnakeGamePopup({ open, setOpen }) {
+export default function SnakeGamePopup({ open, setOpen, sendSnekScore}) {
   // We'll track whether the game has started
   const [gameStarted, setGameStarted] = React.useState(false);
   // Track if the player has died
   const [gameOver, setGameOver] = React.useState(false);
+
+  // Score state
+  const [score, setScore] = React.useState(0);
 
   // The snake game data stored in refs so it persists across renders
   const snakeRef = React.useRef([]);
@@ -48,8 +51,6 @@ export default function SnakeGamePopup({ open, setOpen }) {
   // Check if the snake runs into itself
   const checkSelfCollision = (head) => {
     const snake = snakeRef.current;
-    // Compare head to every segment except the last one (which is the head)
-    // Actually, you can include the last one if you haven't shifted the array yet
     for (let i = 0; i < snake.length - 1; i++) {
       const segment = snake[i];
       if (segment.x === head.x && segment.y === head.y) {
@@ -63,7 +64,7 @@ export default function SnakeGamePopup({ open, setOpen }) {
   const draw = (p5) => {
     p5.background(220);
 
-    // If the game hasn’t started, show a “Click START” message
+    // If the game hasn’t started, show a "Click START" message
     if (!gameStarted) {
       p5.fill(0);
       p5.textSize(24);
@@ -107,6 +108,7 @@ export default function SnakeGamePopup({ open, setOpen }) {
       const tail = { ...snake[0] };
       snake.unshift(tail);
       spawnFood(p5);
+      setScore((prevScore) => prevScore + 1);
     }
 
     // Check self-collision
@@ -148,10 +150,25 @@ export default function SnakeGamePopup({ open, setOpen }) {
     }
   };
 
+  // Prevent arrow keys from scrolling
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (gameStarted && [37, 38, 39, 40].includes(e.keyCode)) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [gameStarted]);
+
   // Start the game or restart if gameOver
   const handleStart = (p5) => {
     setGameOver(false);
     resetGame();
+    setScore(0);
     setGameStarted(true);
   };
 
@@ -165,7 +182,7 @@ export default function SnakeGamePopup({ open, setOpen }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center bg-black/50"
+            className="fixed inset-0 flex items-center justify-center bg-black/50 z-[9999]"
           >
             <motion.div
               initial={{ scale: 0.8 }}
@@ -173,14 +190,15 @@ export default function SnakeGamePopup({ open, setOpen }) {
               exit={{ scale: 0.8 }}
               className="rounded-2xl bg-white p-6 shadow-md"
             >
-              <div className="flex justify-between justify-center px-2">
+              <div className="flex justify-between justify-center px-2 w-full items-center">
                 <span className="text-2xl">Snek</span>
+                <span className="text-xl ml-6">Score: {score}</span>
 
                 {/* START button */}
                 {!gameStarted && (
                     <button
                     type="button"
-                    className="mb-4 block rounded-xl border px-4 py-2 text-base bg-lime-400 hover:bg-lime-300"
+                    className="mb-4 ml-6 block rounded-xl border px-4 py-2 text-sm bg-lime-400 hover:bg-lime-300"
                     onClick={() => handleStart()}
                     >
                     START
@@ -190,17 +208,17 @@ export default function SnakeGamePopup({ open, setOpen }) {
                 {/* Close button */}
                 <button
                   type="button"
-                  className="mb-4 block rounded-xl border px-4 py-2 text-sm hover:shadow"
+                  className="mb-4 ml-4 block rounded-xl border px-4 py-2 text-sm hover:shadow"
                   onClick={() => {
                     setGameStarted(false);
                     setOpen(false);
+                    sendSnekScore(score);
+                    setScore(0);
                   }}
                 >
                   Close
                 </button>
               </div>
-
-              
 
               {/* Snake game canvas */}
               <ReactP5Wrapper

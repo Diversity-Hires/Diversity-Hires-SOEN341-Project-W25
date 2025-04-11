@@ -1,7 +1,6 @@
-import React, { useState, useEffect }  from 'react';
+import React, { useState, useEffect, Fragment }  from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import axios from 'axios';
-import { Fragment } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import Notiflix from 'notiflix';
 

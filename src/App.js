@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import TagManager from 'react-gtm-module';
 import AOS from 'aos';
 import "aos/dist/aos.css";
 import './index.css';
@@ -12,7 +11,6 @@ import {
 import Login from './pages/Login';
 import Home from './pages/Home';
 
-import PrivateRoute from './components/PrivateRoute';
 import {useDocTitle} from './components/CustomHook';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -36,7 +34,6 @@ function App() {
   useDocTitle("ChatHaven");
 
   return (
-    <>
       <Router>
         <ScrollToTop>
           <Routes>
@@ -45,19 +42,8 @@ function App() {
           </Routes>
         </ScrollToTop>
       </Router>
-    </>
   );
 }
-
-
-{/* <Route
-path="/crm"
-element={
-  <PrivateRoute>
-    <LeadsTable />
-  </PrivateRoute>
-}
-/> */}
 
 
 export default App;

@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
 import axios from "axios";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import Notiflix from "notiflix";
@@ -98,38 +97,6 @@ export default function JoinServer({ open, setOpen, servers, currentServers, cur
             // Optionally show an error notification
           }
 
-    };
-
-
-    //Create group on form submit
-    const handleSubmit = async (event) => {
-        // event.preventDefault();
-        // try {
-        // await axios.post(
-        //     `${API_URL}/new-dm`,
-        //     {
-        //     users: [currentUser, selectedUserToDM],
-        //     },
-        //     {
-        //     headers: {
-        //         Authorization: `Bearer ${token}`,
-        //         'Content-Type': 'application/json',
-        //         'x-api-key': API_KEY,
-        //     },
-        //     }
-        // );
-
-        // Notiflix.Notify.success('You can now DM this person!');
-        // setSelectedUserToDM('');
-        // setSearch('');
-        // refresh();
-        // setOpen(false);
-        // } catch (error) {
-        // Notiflix.Notify.failure(
-        //     error.response?.data?.message || 'Failed to create DM.'
-        // );
-        // console.error('DM creation error:', error);
-        // }
     };
 
 

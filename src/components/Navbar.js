@@ -3,56 +3,78 @@ import { Bars3Icon, BellIcon, XMarkIcon, UserIcon } from '@heroicons/react/24/ou
 import Logo from '../images/Logo.png';
 import DmIcon from '../images/DmIcon.png';
 import GcIcon from '../images/GcIcon.png';
-import {setUserOffline} from '../presence';
-import React, { Component } from "react";
+import {setUserOffline, isUserAway, toggleUserAway} from '../presence';
+import React, { Component, useEffect, useState} from "react";
 import Switch from "react-switch";
-import { useState } from "react";
+import ViewRequests from '../components/ViewRequests'
 
 
 
-export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek}) {
+export default function Navbar({user, serverMode, toggleServerMode, setOpenSnek, joinRequestsForUser, getRequests}) {
 
-const navigation = [
+    const [isAway, setIsAway] = useState(null);
+    const [openViewRequests, setOpenViewRequests] = useState(false);
 
-    { name: 'Servers', href: '#', current: true, icon: GcIcon}, // use GcIcon import
-    { name: 'DM', href: '#', current: false, icon: DmIcon}, //use DmIcon import
-   
-]
-
-const logout = async () => {
-    await setUserOffline(user); // Wait for the offline update
-    localStorage.removeItem('token');
-    window.location.href = '/';
-  };
-
-  const ActiveToggleSwitch = () => {
-    const [isActive, setIsActive] = useState(false);
-  
-    return (
-      <div className="flex items-center justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-        <span className="text-gray-900 font-medium">Invisible</span>
-        <Switch
-          checked={isActive}
-          onChange={() => setIsActive(!isActive)}
-          offColor="#ccc"
-          onColor="#0f0"
-          className="react-switch"
-        />
-      </div>
-    );
-  };
-
-const userNavigation = [
-    { name: 'Your Profile', href: '#' },
-    { name: 'Settings', href: '#' },
-    { name:'Invisible',component: () => <ActiveToggleSwitch /> }, 
-    { name: 'Sign out', onClick: logout },
-];
+    // Set isAway to the away status of the user
+    useEffect(() => {
+        isUserAway(user)
+          .then(setIsAway)
+          .catch(err => console.error(err));
+      }, [user, serverMode]);
 
 
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ')
-}
+    const handleViewRequests = () => {
+    setOpenViewRequests(true);
+    };
+
+    const logout = () => {
+        setUserOffline(user); // Wait for the offline update
+        localStorage.removeItem('token');
+        window.location.href = '/';
+    };
+
+    const navigation = [
+
+        { name: 'Servers', href: '#', current: true, icon: GcIcon}, // use GcIcon import
+        { name: 'DM', href: '#', current: false, icon: DmIcon}, //use DmIcon import
+    
+    ]
+
+    const userNavigation = [
+        // { name: 'Your Profile', href: '#' },
+        // { name: 'Settings', onClick: setOpenSnek },
+        { name: 'Away', component: () => <ActiveToggleSwitch /> }, 
+        { name: 'Sign out', onClick: logout },
+    ];
+
+
+    const ActiveToggleSwitch = () => {
+        return (
+        <div className="flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-gray-100">
+            <span className="text-gray-700 font-medium">Away</span>
+            <Switch
+            checked={!!isAway}
+            onChange={() => {
+                toggleUserAway(user);
+                setIsAway(!isAway);
+            }}
+        
+            offColor="#ccc"
+            onColor="#0f0"
+            className="react-switch"
+            />
+        </div>
+        );
+    }
+
+
+
+    function classNames(...classes) {
+    return classes.filter(Boolean).join(' ')
+    }
+
+
+
     return (
         <>
             <div className="min-h-full">
@@ -120,11 +142,15 @@ function classNames(...classes) {
                         <div className="ml-4 flex items-center md:ml-6">
                         <button
                             type="button"
-                            className="relative rounded-full p-1 text-violet-800 hover:text-white" // focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
+                            onClick={handleViewRequests}
+                            className={`relative rounded-full p-1 text-violet-800 hover:text-white ${joinRequestsForUser.length > 0 ? 'bg-rose-500 rounded-3xl': ''}`} // focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden
                         >
                             <span className="absolute -inset-1.5" />
                             <span className="sr-only">View notifications</span>
-                            <BellIcon aria-hidden="true" className="size-6" />
+                            <BellIcon 
+                                aria-hidden="true" 
+                                className="size-6"
+                            />
                         </button>
     
                         {/* Profile dropdown */}
@@ -246,7 +272,13 @@ function classNames(...classes) {
                 </DisclosurePanel>
                 </Disclosure>
                 
-
+                <ViewRequests
+                    open={openViewRequests}
+                    setOpen={setOpenViewRequests}
+                    requests={joinRequestsForUser}
+                    currentUser={user}
+                    refresh={getRequests}
+                />
 
     
             </div>
