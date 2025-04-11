@@ -1,8 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import AdminDropdown from './Admin_DropDown';
-import p5 from 'p5';
-// import { db } from '../firebase'; // Firebase config
-// import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import AdminDropdown from './Admin_DropDown'
 import {
   UserPlusIcon,
   UserMinusIcon,
@@ -10,7 +7,6 @@ import {
   ArrowRightStartOnRectangleIcon,
   LanguageIcon
 } from '@heroicons/react/24/outline';
-import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import Bubbles from '../animations/Bubbles';
 import axios from 'axios';
 import Notiflix from 'notiflix';
@@ -40,7 +36,7 @@ export default function Chat({
 }) {
   const [newMessage, setNewMessage] = useState('');
   const [open, setOpen] = useState(false);
-  const [selectedAction, setSelectedAction] = useState('');
+  const [selectedAction] = useState('');
   const buttonRef = useRef(null);
   // Add state for translated messages
   const [translatedMessages, setTranslatedMessages] = useState({});
