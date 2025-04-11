@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import JoinServer from './JoinServer';
 import axios from 'axios';
 import Notiflix from 'notiflix';
-import { getDatabase, ref, get, onValue, off } from 'firebase/database';
+import { getDatabase, ref, get } from 'firebase/database';
 import '@testing-library/jest-dom/extend-expect';
 
 jest.mock('axios');
