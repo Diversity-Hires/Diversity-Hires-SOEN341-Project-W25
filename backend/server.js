@@ -55,7 +55,7 @@ function apiKeyMiddleware(req, res, next) {
 // Test connection using async/await
 (async () => {
   try {
-    const snapshot = await db.ref('healthCheck').once('value');
+     await db.ref('healthCheck').once('value');
     console.log('Connected to Firebase Database');
   } catch (err) {
     console.error('Database connection failed:', err.message);

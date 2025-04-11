@@ -1,23 +1,23 @@
-import { useEffect, useLayoutEffect } from "react";
+import React, { useLayoutEffect } from "react";
+import PropTypes from 'prop-types';
 import { useLocation } from "react-router-dom";
 
-const ScrollToTop = (props) => {
-    const {pathname} = useLocation();
+function ScrollToTop({ children }) {
+  const { pathname } = useLocation();
 
-    useLayoutEffect(() => {
-      // Prevent browser from preserving scroll position
-      if ('scrollRestoration' in window.history) {
-          window.history.scrollRestoration = 'manual';
-      }
-
-      // Scroll instantly to the top
-      window.scrollTo(0, 0);
+  useLayoutEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    window.scrollTo(0, 0);
   }, [pathname]);
-  
-    return <>
-        {props.children}
-    </>
-    
-  };
+
+  return <>{children}</>;
+}
+
+// Add prop types for `children`
+ScrollToTop.propTypes = {
+  children: PropTypes.node,
+};
 
 export default ScrollToTop;
