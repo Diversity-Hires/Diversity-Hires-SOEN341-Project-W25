@@ -16,7 +16,7 @@ const PORT = process.env.REACT_APP_SERVER_PORT;
 // Firebase Admin Configuration - Uses Service Account for beck-end access to Firebase services
 const admin = require("firebase-admin");
 
-const serviceAccount = require("./chathaven-3b77a-firebase-adminsdk-fbsvc-a07b73f8ff.json");
+const serviceAccount = require("./chathaven-3b77a-firebase-adminsdk-fbsvc-e6715777f3.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
