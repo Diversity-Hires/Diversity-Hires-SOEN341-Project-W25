@@ -29,7 +29,7 @@ jobs:
           npm install firebase-admin
           npm start &
 
-      # 5) Front-end install, build, and test
+      # 5) Front-end install, build, and full test
       - name: Install Frontend Deps
         run: |
           cd $GITHUB_WORKSPACE
