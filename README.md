@@ -1,6 +1,6 @@
 ## Description
 
-This is the SOEN341 project of the Diversity Hires team called ChatHaven
+This is the SOEN341 project of the Diversity Hires team called Messenger++
 
 
 ## Members:
@@ -17,6 +17,5 @@ To use this webapp:
 1. Clone the repository to your local machine, 
 2. run `npm install` to install all the required dependencies and
 3. run `npm start` to view the website locally.
-4. run "node ./backend/server.js"
 Feel free to edit and make changes. 
 
