@@ -1,15 +1,40 @@
-// crm_server.js
-require('dotenv').config({ path: '../../.env' }); //load .enc file from its location
+// server.js
+require('dotenv').config({ path: '../.env' }); //load .enc file from its location
 const express = require('express');
-const mysql = require('mysql2/promise');
+const admin = require('firebase-admin');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const helmet = require('helmet');
 
+// initialize firebase admin SDK
+const serviceAccount = require('/Users/moses/Desktop/SOEN 341/Diversity-Hires-SOEN341-Project-W25/backend/ChatHaven Firebase Admin SDK.json');
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const db = admin.firestore(); // Firestore Database reference 
 const app = express();
 
-const PORT = process.env.REACT_APP_CRM_SERVER_PORT;
+const PORT = process.env.REACT_APP_SERVER_PORT;
+
+
+// Firebase Admin Configuration - Uses Service Account for beck-end access to Firebase services
+const admin = require("firebase-admin");
+
+const serviceAccount = require("./chathaven-3b77a-firebase-adminsdk-fbsvc-a07b73f8ff.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://chathaven-3b77a-default-rtdb.firebaseio.com"
+});
+
+// For Firestore:
+// const db = admin.firestore();
+// For Realtime Database:
+const db = admin.database();
+
+
 
 // Middlewares
 app.use(helmet());
@@ -17,9 +42,10 @@ app.use(cors());
 app.use(express.json());
 app.use((req, res, next) => {
   //print incoming requests for debugging
-  console.log(`Incoming request: ${req.method} ${req.path}  Name: ${req.body.firstName}`);
+  console.log(`Incoming request: ${req.method} ${req.path}`);
   next();
 });
+
 
 // API Key Middleware (For Specific Routes)
 function apiKeyMiddleware(req, res, next) {
@@ -31,22 +57,12 @@ function apiKeyMiddleware(req, res, next) {
   next();
 }
 
-// 1) DB Connection
-const pool = mysql.createPool({
-  host: process.env.REACT_APP_DB_HOST,
-  user: process.env.REACT_APP_DB_USER,
-  password: process.env.REACT_APP_DB_PASSWORD,
-  database: process.env.REACT_APP_DB_NAME,
-  port: process.env.REACT_APP_DB_PORT,
-  waitForConnections: true,
-  connectionLimit: 10
-});
 
 // Test connection using async/await
 (async () => {
   try {
-    const [rows] = await pool.query('SELECT 1');
-    console.log('Connected to MySQL Database (Pool)');
+    const snapshot = await db.ref('healthCheck').once('value');
+    console.log('Connected to Firebase Database');
   } catch (err) {
     console.error('Database connection failed:', err.message);
     process.exit(1);
@@ -74,13 +90,13 @@ function authMiddleware(req, res, next) {
 }
 
 
-// CRM Health Check Endpoint - adapted for mysql2/promise
+// CRM Health Check Endpoint - Check if CRM server is running for Firebase
 app.get('/api/health', async (req, res) => {
   try {
-      const connection = await pool.getConnection();
-      await connection.ping();
-      connection.release();
-      res.status(200).json({ crm_status: 'OK', database: 'Connected' });
+      // We'll just do a quick read from a root node or a test node
+      // If we get any data or even null, it means DB is accessible
+      const snapshot = await db.ref('healthCheck').once('value');
+      res.status(200).json({ status: 'OK', database: 'Connected', data: snapshot.val() || null});
   } catch (err) {
       res.status(500).json({ status: 'Database unreachable', error: err.message });
   }
@@ -90,24 +106,30 @@ app.get('/api/health', async (req, res) => {
 
 // Login
 app.post('/api/auth/login', apiKeyMiddleware, async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
   try {
-    const [rows] = await pool.query('SELECT * FROM crm_users WHERE username = ?', [username]);
-    if (!rows.length) {
+    // Search for a user by username
+    const userSnapshot = await db.ref('users').child(username).once('value');
+    const userData = userSnapshot.val();
+
+    if (!userData) {
       return res.status(401).json({ success: false, message: 'Invalid credentials: user not found' });
     }
-    const user = rows[0];
-    const match = await bcrypt.compare(password, user.password);
+
+    // Compare the hashed password
+    const match = await bcrypt.compare(password, userData.password);
     if (!match) {
       console.error('Failed CRM login attempt detected');
       return res.status(401).json({ success: false, message: 'Invalid credentials: incorrect password' });
     }
+  
     // Handle successful login
     console.warn("Successful CRM login")
     // Generate token
-    const token = jwt.sign({ id: user.id }, process.env.REACT_APP_JWT_SECRET, {
+    const token = jwt.sign({ id: username }, process.env.REACT_APP_JWT_SECRET, {
       expiresIn: '1d'
     });
+
     return res.json({ token });
   } catch (error) {
     console.error('Login error:', error);
@@ -116,25 +138,28 @@ app.post('/api/auth/login', apiKeyMiddleware, async (req, res) => {
 });
 
 
-// Register
-app.post('/api/auth/register', async (req, res) => {
-  const { email, password } = req.body;
+
+// // Register
+app.post('/api/auth/register', apiKeyMiddleware, async (req, res) => {
+  const { username, password } = req.body;
   try {
-    // check if user exists
-    const [existing] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (existing.length) {
-      return res.status(400).json({ message: 'Email already in use.' });
+    const userSnapshot = await db.ref('users').child(username).once('value');
+    if (userSnapshot.exists()) {
+      return res.status(400).json({ message: 'Username already in use.' });
     }
-    // hash password
+
     const hashed = await bcrypt.hash(password, 10);
-    await pool.query('INSERT INTO users (email, password) VALUES (?, ?)', [email, hashed]);
-    return res.json({ message: 'User registered successfully.' });
+    await db.ref('users').child(username).set({
+      password: hashed,
+      // other user fields...
+    });
+
+    res.json({ message: 'User registered successfully.' });
   } catch (error) {
     console.error('Register error:', error);
-    return res.status(500).json({ message: 'Server error.' });
+    res.status(500).json({ message: 'Server error.' });
   }
 });
-
 
 
 // ================ START SERVER ================

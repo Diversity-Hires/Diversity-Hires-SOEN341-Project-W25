@@ -10,7 +10,7 @@ import {
 } from 'react-router-dom';
 // All pages
 import Login from './pages/Login';
-//import Home from './pages/Home';
+import Home from './pages/Home';
 
 import PrivateRoute from './components/PrivateRoute';
 import {useDocTitle} from './components/CustomHook';
@@ -33,7 +33,7 @@ function App() {
   }, []);
 
 
-  useDocTitle("ChatHeaven");
+  useDocTitle("ChatHaven");
 
   return (
     <>
@@ -41,6 +41,7 @@ function App() {
         <ScrollToTop>
           <Routes>
             <Route path="/" element={<Login />} />
+            <Route path="/home" element={<Home />} />
           </Routes>
         </ScrollToTop>
       </Router>

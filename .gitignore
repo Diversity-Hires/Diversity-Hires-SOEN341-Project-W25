@@ -3,6 +3,7 @@
 # dependencies
 /node_modules
 /.pnp
+package-lock.json
 .pnp.js
 
 # testing
@@ -11,6 +12,10 @@
 # production
 /build
 
+#firebase admin sdk
+
+firebase-service-account.json
+
 # misc
 .DS_Store
 .env.local
@@ -18,6 +23,11 @@
 .env.test.local
 .env.production.local
 
+#logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+#IDE & OS Files
+.vscode
+.DS_Store
